@@ -1,0 +1,134 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../src/generated/prisma"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                Int                 @id @default(autoincrement())
+  username          String
+  email             String              @unique
+  password          String
+  role              Role                @default(USER)
+  isActive          Boolean             @default(true)
+  lastLogin         DateTime?
+  profileImage      String?
+  phone             String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  passwordResets    PasswordReset[]
+  createdServices   Service[]           @relation("CreatedServices")
+  updatedServices   Service[]           @relation("UpdatedServices")
+  DonorRegistration DonorRegistration[]
+  Payment           Payment[]
+}
+
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  otp       String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Service {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  accountNo   String?  @db.VarChar
+  panelID     String?  @db.VarChar
+  serviceFee  Int?
+  bannerImage String?
+  createdBy   Int
+  updatedBy   Int?
+  status      Boolean  @default(true)
+  isDelete    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  creator     User     @relation("CreatedServices", fields: [createdBy], references: [id])
+  updater     User?    @relation("UpdatedServices", fields: [updatedBy], references: [id])
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPERVISOR
+  MODERATOR
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  action    String
+  model     String
+  recordId  Int?
+  timestamp DateTime @default(now())
+  details   String?
+}
+
+model DonorRegistration {
+  id                         Int      @id @default(autoincrement())
+  userId                     Int
+  donorNameFirst             String
+  donorNameLast              String
+  donorSex                   String?
+  donorDateOfBirth           DateTime?
+  donorEmail                 String
+  donorStateOfResidence      String
+  donorSSN                   String?
+  serviceId                  String?
+  accountNo                  String?
+  panelId                    String
+  reasonForTest              String?
+  testingAuthority           String?
+  registrationExpirationDate DateTime
+  splitSpecimenRequested     Boolean  @default(false)
+  labcorpRegistrationNumber  String?
+  status                     String   @default("PENDING") // PENDING, CONFIRMED, REJECTED, RESUBMITTED
+  rejectReason               String? // Optional reject reason
+  createdBy                  Int
+  updatedBy                  Int?
+  createdByIP                String
+  updatedByIP                String?
+  isDelete                   Boolean  @default(false)
+  isActive                   Boolean  @default(true)
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  // Relations
+  user     User      @relation(fields: [userId], references: [id])
+  payments Payment[]
+}
+
+model Payment {
+  id                  Int      @id @default(autoincrement())
+  userId              Int
+  donorRegistrationId Int
+  amount              Float
+  currency            String
+  paymentMethod       String
+  transactionId       String
+  status              String   @default("PENDING") // PENDING, CONFIRMED, FAILED
+  isDelete            Boolean  @default(false)
+  createdBy           Int // ✅ who created the payment
+  updatedBy           Int? // ✅ who updated it
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user              User              @relation(fields: [userId], references: [id])
+  donorRegistration DonorRegistration @relation(fields: [donorRegistrationId], references: [id])
+}
+
+enum RegistrationStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  RESUBMITTED
+}
