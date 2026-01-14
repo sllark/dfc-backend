@@ -42,7 +42,7 @@ const app = express();
 // ===== Middlewares =====
 app.use(cors({
     // origin: ["http://localhost:3001", "http://localhost:3002"],
-    origin: ["https://drugfreecomplience.vercel.app", "https://frontend.dfctest.com", "https://admin.dfctest.com", "https://dfctest.com","http://localhost:4000"],
+    origin: ["https://drugfreecomplience.vercel.app", "https://frontend.dfctest.com", "https://admin.dfctest.com", "https://dfctest.com","http://localhost:4000","http://localhost:3002","http://localhost:3001"],
     credentials: true,
 }));
 
