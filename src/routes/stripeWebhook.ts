@@ -23,7 +23,11 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
         );
     } catch (err: any) {
         console.error("Webhook signature verification failed:", err.message);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
+        return res.status(400).json({ 
+            success: false,
+            error: "Webhook signature verification failed",
+            message: err.message 
+        });
     }
 
     if (event.type === "checkout.session.completed") {

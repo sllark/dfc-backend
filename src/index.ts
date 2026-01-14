@@ -16,17 +16,44 @@ import stripeSessionRouter from "./routes/stripeSession";
 
 dotenv.config();
 
+// ===== Validate Required Environment Variables =====
+const requiredEnvVars = ['JWT_SECRET', 'ENC_KEY', 'ENC_IV'];
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingEnvVars.length > 0) {
+    console.error('❌ Missing required environment variables:', missingEnvVars.join(', '));
+    console.error('Please set these in your .env file');
+    process.exit(1);
+}
+
+// Validate ENC_KEY and ENC_IV format
+if (process.env.ENC_KEY && process.env.ENC_KEY.length !== 64) {
+    console.error('❌ ENC_KEY must be 32 bytes (64 hex characters)');
+    process.exit(1);
+}
+
+if (process.env.ENC_IV && process.env.ENC_IV.length !== 32) {
+    console.error('❌ ENC_IV must be 16 bytes (32 hex characters)');
+    process.exit(1);
+}
+
 const app = express();
 
 // ===== Middlewares =====
 app.use(cors({
     // origin: ["http://localhost:3001", "http://localhost:3002"],
-    origin: ["https://drugfreecomplience.vercel.app", "https://frontend.dfctest.com", "https://admin.dfctest.com", "https://dfctest.com","http://localhost:3001"],
+    origin: ["https://drugfreecomplience.vercel.app", "https://frontend.dfctest.com", "https://admin.dfctest.com", "https://dfctest.com","http://localhost:4000"],
     credentials: true,
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ===== Ensure JSON Content-Type for all responses =====
+app.use((req: Request, res: Response, next: NextFunction) => {
+    res.setHeader('Content-Type', 'application/json');
+    next();
+});
 
 // ===== Static Files =====
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -51,23 +78,44 @@ app.use("/api/stripe/webhook", stripeWebhookRouter);
 app.use("/api/stripe", stripeSessionRouter);
 
 // For other routes, use normal JSON parser
-app.use(express.json());
 app.use("/api/checkout", stripeCheckoutRouter);
 
-// ===== Health Check =====
+// ===== Health Check (must be before 404 handler) =====
 app.get('/', (req: Request, res: Response) => {
-    res.send('SD Coders API is running!');
+    res.json({ success: true, message: 'SD Coders API is running!' });
+});
+
+app.get('/health', (req: Request, res: Response) => {
+    res.json({ success: true, status: 'healthy', timestamp: new Date().toISOString() });
 });
 
 // ===== 404 Handler =====
 app.use((req: Request, res: Response, next: NextFunction) => {
-    res.status(404).json({ success: false, message: 'Endpoint not found' });
+    res.status(404).json({ success: false, message: 'Endpoint not found', path: req.path });
 });
 
 // ===== Global Error Handler =====
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-    console.error(err);
-    res.status(err.status || 500).json({ success: false, message: err.message || 'Internal server error' });
+    console.error('Error:', err);
+    
+    // Ensure we always return JSON, never HTML
+    if (!res.headersSent) {
+        res.status(err.status || 500).json({ 
+            success: false, 
+            message: err.message || 'Internal server error',
+            ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+        });
+    }
+});
+
+// ===== Handle Unhandled Promise Rejections =====
+process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error: Error) => {
+    console.error('Uncaught Exception:', error);
+    process.exit(1);
 });
 
 // ===== Start Server =====

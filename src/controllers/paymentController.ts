@@ -19,6 +19,14 @@ export const paymentController = {
             const userId = req.user!.userId;
             const body: CreatePaymentBody = req.body;
 
+            // Validate required fields
+            if (!body.donorRegistrationId || !body.amount || !body.currency || !body.paymentMethod || !body.transactionId) {
+                return res.status(400).json({ 
+                    success: false,
+                    message: "donorRegistrationId, amount, currency, paymentMethod, and transactionId are required" 
+                });
+            }
+
             const payment = await paymentService.create(
                 { ...body, userId, createdBy: userId },
                 ip
@@ -66,6 +74,10 @@ export const paymentController = {
     async getById(req: AuthenticatedRequest, res: Response) {
         try {
             const id = Number(req.params.id);
+            if (isNaN(id)) {
+                return res.status(400).json({ success: false, message: "Invalid payment ID" });
+            }
+
             const userId = req.user!.userId;
             const role = req.user!.role as "ADMIN" | "USER";
 
@@ -82,7 +94,15 @@ export const paymentController = {
     async updateStatus(req: AuthenticatedRequest, res: Response) {
         try {
             const id = Number(req.params.id);
+            if (isNaN(id)) {
+                return res.status(400).json({ success: false, message: "Invalid payment ID" });
+            }
+
             const { status } = req.body;
+            if (!status) {
+                return res.status(400).json({ success: false, message: "Status is required" });
+            }
+
             const updatedBy = req.user!.userId;
             const role = req.user!.role as "ADMIN" | "USER";
             const ip = getClientIp(req);
@@ -98,6 +118,10 @@ export const paymentController = {
     async softDelete(req: AuthenticatedRequest, res: Response) {
         try {
             const id = Number(req.params.id);
+            if (isNaN(id)) {
+                return res.status(400).json({ success: false, message: "Invalid payment ID" });
+            }
+
             const updatedBy = req.user!.userId;
             const role = req.user!.role as "ADMIN" | "USER";
 

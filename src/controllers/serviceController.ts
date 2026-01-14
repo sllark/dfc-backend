@@ -9,7 +9,23 @@ export const serviceController = {
         try {
             const { name, slug, accountNo, panelID, createdBy, status, serviceFee } = req.body;
 
-            const bannerImage: string | null = req.file ? `/uploads/${req.file.filename}` : null;
+            // Validate required fields
+            if (!name || !slug || !createdBy) {
+                return res.status(400).json({ 
+                    success: false,
+                    message: "Name, slug, and createdBy are required" 
+                });
+            }
+
+            // Handle banner image: either from file upload or URL from body
+            let bannerImage: string | null = null;
+            if (req.file) {
+                // File uploaded via form-data
+                bannerImage = `/uploads/${req.file.filename}`;
+            } else if (req.body.bannerImage) {
+                // Image URL provided in JSON body
+                bannerImage = req.body.bannerImage;
+            }
 
             const data: Prisma.ServiceUncheckedCreateInput = {
                 name,
@@ -85,7 +101,21 @@ export const serviceController = {
     async update(req: Request, res: Response) {
         try {
             const id = Number(req.params.id);
+            if (isNaN(id)) {
+                return res.status(400).json({ success: false, message: "Invalid service ID" });
+            }
+
             const { name, slug, accountNo, panelID, updatedBy, status, serviceFee } = req.body;
+
+            // Handle banner image: either from file upload or URL from body
+            let bannerImageUpdate: { bannerImage: string } | {} = {};
+            if (req.file) {
+                // File uploaded via form-data
+                bannerImageUpdate = { bannerImage: `/uploads/${req.file.filename}` };
+            } else if (req.body.bannerImage !== undefined) {
+                // Image URL provided in JSON body (can be null to remove image)
+                bannerImageUpdate = { bannerImage: req.body.bannerImage || null };
+            }
 
             const data: Prisma.ServiceUncheckedUpdateInput = {
                 ...(name !== undefined && { name }),
@@ -95,7 +125,7 @@ export const serviceController = {
                 ...(serviceFee !== undefined && { serviceFee: Number(serviceFee) }), // ✅ added serviceFee
                 ...(status !== undefined && { status: status === "true" || status === true }),
                 ...(updatedBy !== undefined && { updatedBy: Number(updatedBy) }),
-                ...(req.file && { bannerImage: `/uploads/${req.file.filename}` }),
+                ...bannerImageUpdate,
             };
 
             const updated = await serviceService.update(id, data);
@@ -109,7 +139,14 @@ export const serviceController = {
     async delete(req: Request, res: Response) {
         try {
             const id = Number(req.params.id);
+            if (isNaN(id)) {
+                return res.status(400).json({ success: false, message: "Invalid service ID" });
+            }
+
             const { updatedBy } = req.body;
+            if (!updatedBy) {
+                return res.status(400).json({ success: false, message: "updatedBy is required" });
+            }
 
             const deleted = await serviceService.softDelete(id, Number(updatedBy));
             res.json({ success: true, data: deleted });

@@ -16,9 +16,25 @@ router.get("/", (req, res, next) => {
     next();
 }, serviceController.getAll);
 
-router.post("/", AuthMiddleware.authenticate, upload.single("bannerImage"), serviceController.create);
+// Create service - supports both JSON (with image URL) and form-data (with file upload)
+router.post("/", AuthMiddleware.authenticate, (req, res, next) => {
+    // Only use multer if content-type is multipart/form-data
+    if (req.headers['content-type']?.includes('multipart/form-data')) {
+        upload.single("bannerImage")(req, res, next);
+    } else {
+        next();
+    }
+}, serviceController.create);
 router.get("/:id", serviceController.getById);
-router.put("/:id", AuthMiddleware.authenticate, upload.single("bannerImage"), serviceController.update);
+// Update service - supports both JSON (with image URL) and form-data (with file upload)
+router.put("/:id", AuthMiddleware.authenticate, (req, res, next) => {
+    // Only use multer if content-type is multipart/form-data
+    if (req.headers['content-type']?.includes('multipart/form-data')) {
+        upload.single("bannerImage")(req, res, next);
+    } else {
+        next();
+    }
+}, serviceController.update);
 router.delete("/:id", AuthMiddleware.authenticate, serviceController.delete);
 
 export default router;

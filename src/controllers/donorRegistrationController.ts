@@ -14,6 +14,14 @@ export const donorRegistrationController = {
             const userId = req.user?.userId;
             if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
+            // Basic validation
+            if (!req.body.donorNameFirst || !req.body.donorNameLast) {
+                return res.status(400).json({ 
+                    success: false,
+                    message: "Donor first name and last name are required" 
+                });
+            }
+
             const data: Prisma.DonorRegistrationUncheckedCreateInput = {
                 ...req.body,
                 userId,
@@ -63,6 +71,10 @@ export const donorRegistrationController = {
     async getById(req: AuthenticatedRequest, res: Response) {
         try {
             const id = Number(req.params.id);
+            if (isNaN(id)) {
+                return res.status(400).json({ success: false, message: "Invalid registration ID" });
+            }
+
             const currentUser = req.user;
             const role = currentUser?.role as RoleType;
 
@@ -79,6 +91,10 @@ export const donorRegistrationController = {
     async update(req: AuthenticatedRequest, res: Response) {
         try {
             const id = Number(req.params.id);
+            if (isNaN(id)) {
+                return res.status(400).json({ success: false, message: "Invalid registration ID" });
+            }
+
             const ip = getClientIp(req);
             const updatedBy = req.user?.userId;
             const role = req.user?.role as RoleType;
@@ -97,6 +113,10 @@ export const donorRegistrationController = {
     async softDelete(req: AuthenticatedRequest, res: Response) {
         try {
             const id = Number(req.params.id);
+            if (isNaN(id)) {
+                return res.status(400).json({ success: false, message: "Invalid registration ID" });
+            }
+
             const ip = getClientIp(req);
             const updatedBy = req.user?.userId;
             const role = req.user?.role as RoleType;
@@ -174,7 +194,15 @@ export const donorRegistrationController = {
     async reject(req: AuthenticatedRequest, res: Response) {
         try {
             const id = Number(req.params.id);
+            if (isNaN(id)) {
+                return res.status(400).json({ success: false, message: "Invalid registration ID" });
+            }
+
             const { rejectReason } = req.body;
+            if (!rejectReason) {
+                return res.status(400).json({ success: false, message: "Reject reason is required" });
+            }
+
             const ip = getClientIp(req);
             const updatedBy = req.user?.userId;
             const role = req.user?.role as "ADMIN" | "USER" | undefined;

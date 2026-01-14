@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import { encrypt, decrypt } from "../utils/encryption";
 
 const prisma = new PrismaClient();
 
@@ -14,89 +13,37 @@ interface MiddlewareParams {
 
 type MiddlewareNext = (params: MiddlewareParams) => Promise<any>;
 
-// ===== 🔐 Encryption Middleware =====
-prisma.$use(async (params: MiddlewareParams, next: MiddlewareNext) => {
-  const model = params.model ?? "";
-  const action = params.action ?? "";
-
-  if (model === "User" && ["create", "update"].includes(action)) {
-    if (params.args?.data?.email) {
-      params.args.data.email = encrypt(params.args.data.email);
-    }
-    if (params.args?.data?.phone) {
-      params.args.data.phone = encrypt(params.args.data.phone);
-    }
-  }
-
-  if (model === "Service" && ["create", "update"].includes(action)) {
-    if (params.args?.data?.accountNo) {
-      params.args.data.accountNo = encrypt(params.args.data.accountNo);
-    }
-  }
-
-  const result = await next(params);
-
-  if (model === "User" && ["findUnique", "findFirst", "findMany"].includes(action)) {
-    if (Array.isArray(result)) {
-      result.forEach(u => {
-        if (u.email) u.email = decrypt(u.email);
-        if (u.phone) u.phone = decrypt(u.phone);
-      });
-    } else if (result) {
-      if (result.email) result.email = decrypt(result.email);
-      if (result.phone) result.phone = decrypt(result.phone);
-    }
-  }
-
-  if (model === "Service" && ["findUnique", "findFirst", "findMany"].includes(action)) {
-    if (Array.isArray(result)) {
-      result.forEach(s => {
-        if (s.accountNo) s.accountNo = decrypt(s.accountNo);
-      });
-    } else if (result) {
-      if (result.accountNo) result.accountNo = decrypt(result.accountNo);
-    }
-  }
-
-  return result;
-});
-
 // ===== 📝 Audit Log Middleware =====
+// Note: Encryption/decryption is handled manually in services to avoid conflicts
+// Services use encryptDeterministic for emails (for searchability) and encrypt for phones
+// Note: RBAC is handled at the route/controller level, not in Prisma middleware
 prisma.$use(async (params: MiddlewareParams, next: MiddlewareNext) => {
   const model = params.model ?? "";
   const action = params.action ?? "";
   const result = await next(params);
 
+  // Only create audit logs for write operations
+  // Skip if no user context (e.g., during signup/login) - don't fail the operation
   const userId = params.context?.user?.userId ?? null;
 
   if (["create", "update", "delete"].includes(action)) {
-    await prisma.auditLog.create({
-      data: {
-        userId,
-        action,
-        model,
-        recordId: params.args?.where?.id ?? null,
-        details: JSON.stringify(params.args?.data ?? {}),
-      },
-    });
+    try {
+      await prisma.auditLog.create({
+        data: {
+          userId,
+          action,
+          model,
+          recordId: params.args?.where?.id ?? params.args?.data?.id ?? null,
+          details: JSON.stringify(params.args?.data ?? {}),
+        },
+      });
+    } catch (error) {
+      // Don't fail the main operation if audit log fails
+      console.error("Audit log creation failed:", error);
+    }
   }
 
   return result;
-});
-
-// ===== 🔐 RBAC Middleware =====
-prisma.$use(async (params: MiddlewareParams, next: MiddlewareNext) => {
-  const model = params.model ?? "";
-  const action = params.action ?? "";
-  const user = params.context?.user;
-
-  if (!user) throw new Error("Unauthorized");
-
-  if (model === "User" && action === "delete" && user.role !== "ADMIN") {
-    throw new Error("Forbidden: Admins only");
-  }
-
-  return next(params);
 });
 
 export default prisma;
