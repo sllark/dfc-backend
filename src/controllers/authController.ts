@@ -134,16 +134,24 @@ class AuthController {
                 return res.status(403).json({ success: false, message: "Forbidden: Access denied" });
             }
 
-            const { username, phone, password } = authReq.body;
+            const { username, email, firstName, lastName, dateOfBirth, phone, password } = authReq.body;
 
             const updateData: {
                 username?: string;
+                email?: string;
+                firstName?: string;
+                lastName?: string;
+                dateOfBirth?: string;
                 phone?: string;
                 password?: string;
                 profileImage?: string;
             } = {};
 
             if (username) updateData.username = username;
+            if (email) updateData.email = email;
+            if (firstName) updateData.firstName = firstName;
+            if (lastName) updateData.lastName = lastName;
+            if (dateOfBirth) updateData.dateOfBirth = dateOfBirth;
             if (phone) updateData.phone = phone;
             if (password) updateData.password = password;
             if (authReq.file) updateData.profileImage = `/uploads/${authReq.file.filename}`;

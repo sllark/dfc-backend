@@ -37,6 +37,8 @@ class AuthService {
         return {
             ...user,
             email,
+            firstName: user.firstName ? decrypt(user.firstName) : null,
+            lastName: user.lastName ? decrypt(user.lastName) : null,
             phone: user.phone ? decrypt(user.phone) : null,
         };
     };
@@ -74,6 +76,8 @@ class AuthService {
         return {
             ...user,
             email: user.email ? decryptDeterministic(user.email) : null,
+            firstName: user.firstName ? decrypt(user.firstName) : null,
+            lastName: user.lastName ? decrypt(user.lastName) : null,
             phone: user.phone ? decrypt(user.phone) : null,
         };
     };
@@ -89,6 +93,9 @@ class AuthService {
                 id: true,
                 username: true,
                 email: true,
+                firstName: true,
+                lastName: true,
+                dateOfBirth: true,
                 role: true,
                 isActive: true,
                 lastLogin: true,
@@ -102,16 +109,38 @@ class AuthService {
         return users.map(u => ({
             ...u,
             email: u.email ? decryptDeterministic(u.email) : null,
+            firstName: u.firstName ? decrypt(u.firstName) : null,
+            lastName: u.lastName ? decrypt(u.lastName) : null,
             phone: u.phone ? decrypt(u.phone) : null,
         }));
     };
 
     // ====================== Update User ======================
-    static updateUser = async (id: number, data: { username?: string; phone?: string; profileImage?: string; password?: string }) => {
+    static updateUser = async (
+        id: number,
+        data: {
+            username?: string;
+            email?: string;
+            firstName?: string;
+            lastName?: string;
+            dateOfBirth?: string | Date;
+            phone?: string;
+            profileImage?: string;
+            password?: string;
+        }
+    ) => {
         const updateData: any = { ...data };
 
         if (data.password) updateData.password = await bcrypt.hash(data.password, 10);
         if (data.phone) updateData.phone = encrypt(data.phone);
+        if (data.email) updateData.email = encryptDeterministic(data.email);
+        if (data.firstName) updateData.firstName = encrypt(data.firstName);
+        if (data.lastName) updateData.lastName = encrypt(data.lastName);
+        if (data.dateOfBirth) {
+            const dob = data.dateOfBirth instanceof Date ? data.dateOfBirth : new Date(data.dateOfBirth);
+            if (isNaN(dob.getTime())) throw new Error("Invalid dateOfBirth");
+            updateData.dateOfBirth = dob;
+        }
 
         const user = await prisma.user.update({
             where: { id },
@@ -120,6 +149,9 @@ class AuthService {
                 id: true,
                 username: true,
                 email: true,
+                firstName: true,
+                lastName: true,
+                dateOfBirth: true,
                 phone: true,
                 profileImage: true,
                 role: true,
@@ -132,6 +164,9 @@ class AuthService {
 
         return {
             ...user,
+            email: user.email ? decryptDeterministic(user.email) : null,
+            firstName: user.firstName ? decrypt(user.firstName) : null,
+            lastName: user.lastName ? decrypt(user.lastName) : null,
             phone: user.phone ? decrypt(user.phone) : null,
         };
     };

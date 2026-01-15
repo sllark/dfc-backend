@@ -18,13 +18,13 @@ router.get("/auth/check-user", async (req, res) => {
     try {
         const email = req.query.email;
         if (!email)
-            return res.status(400).json({ exists: false, message: "Email is required" });
+            return res.status(400).json({ success: false, exists: false, message: "Email is required" });
         const user = await authService_1.default.findUserByEmail(email);
-        res.json({ exists: !!user });
+        res.json({ success: true, exists: !!user });
     }
     catch (err) {
         console.error(err);
-        res.status(500).json({ exists: false, message: err.message });
+        res.status(500).json({ success: false, exists: false, message: err.message });
     }
 });
 // Route to get user by ID (requires authentication)

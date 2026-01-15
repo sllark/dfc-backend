@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon ./src/index",
-    "clean": "rm -rf dist",
+    "clean": "rimraf dist",
     "build": "npm run clean && tsc",
     "start": "ts-node ./src/index.ts",
     "db:check": "node -e \"import('pg').then(pg => {const {Client}=pg; const c=new Client({user:'postgres',password:'3421',host:'localhost',port:5432,database:'mybizhelperapi'});c.connect().then(()=>{console.log('✅ DB Connected');return c.end();}).catch(e=>{console.error('❌',e.message);});})\"",
@@ -26,6 +26,7 @@
     "@types/soap": "^0.18.0",
     "@types/xml2js": "^0.4.14",
     "prisma": "^6.16.2",
+    "rimraf": "^6.1.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.2"
   },

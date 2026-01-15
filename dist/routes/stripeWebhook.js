@@ -10,19 +10,27 @@ const donorRegistrationService_1 = require("../services/donorRegistrationService
 const paymentService_1 = require("../services/paymentService");
 const ipUtils_1 = require("../utils/ipUtils");
 const router = express_1.default.Router();
-const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-09-30.clover",
-});
+const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY, {});
 // Stripe requires raw body for webhooks
 router.post("/", express_1.default.raw({ type: "application/json" }), async (req, res) => {
     const sig = req.headers["stripe-signature"];
     let event;
     try {
+        if (!process.env.STRIPE_SECRET_KEY) {
+            return res.status(500).json({ success: false, error: "Missing STRIPE_SECRET_KEY in environment" });
+        }
+        if (!process.env.STRIPE_WEBHOOK_SECRET) {
+            return res.status(500).json({ success: false, error: "Missing STRIPE_WEBHOOK_SECRET in environment" });
+        }
         event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
     }
     catch (err) {
         console.error("Webhook signature verification failed:", err.message);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
+        return res.status(400).json({
+            success: false,
+            error: "Webhook signature verification failed",
+            message: err.message
+        });
     }
     if (event.type === "checkout.session.completed") {
         const session = event.data.object;

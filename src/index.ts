@@ -42,9 +42,13 @@ const app = express();
 // ===== Middlewares =====
 app.use(cors({
     // origin: ["http://localhost:3001", "http://localhost:3002"],
-    origin: ["https://drugfreecomplience.vercel.app", "https://frontend.dfctest.com", "https://admin.dfctest.com", "https://dfctest.com","http://localhost:4000","http://localhost:3002","http://localhost:3001"],
+    origin: ["https://drugfreecomplience.vercel.app", "https://frontend.dfctest.com", "https://admin.dfctest.com", "https://dfctest.com","http://localhost:4000","http://localhost:3000","http://localhost:3001"],
     credentials: true,
 }));
+
+// ⚠️ Stripe webhooks require the raw request body.
+// This MUST be registered before express.json()/urlencoded() or signature verification will fail.
+app.use("/api/stripe/webhook", stripeWebhookRouter);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -70,9 +74,6 @@ app.use('/api/payments', AuthMiddleware.authenticate, paymentRoutes);
 
 // Labcorp
 app.use('/api/labcorp', labcorpRoute);
-
-// ⚠️ Webhook must use raw body
-app.use("/api/stripe/webhook", stripeWebhookRouter);
 
 // ✅ New GET endpoint to fetch completed session/payment info
 app.use("/api/stripe", stripeSessionRouter);

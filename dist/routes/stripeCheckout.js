@@ -8,10 +8,22 @@ const stripe_1 = __importDefault(require("stripe"));
 const authService_1 = __importDefault(require("../services/authService"));
 const crypto_1 = __importDefault(require("crypto"));
 const router = (0, express_1.Router)();
-const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY, { apiVersion: "2025-09-30.clover" });
+const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY, {});
 router.post("/", async (req, res) => {
     try {
         const { selectedServices, donorInfo } = req.body;
+        if (!process.env.STRIPE_SECRET_KEY) {
+            return res.status(500).json({ error: "Missing STRIPE_SECRET_KEY in environment" });
+        }
+        if (!process.env.NEXT_PUBLIC_BASE_URL) {
+            return res.status(500).json({ error: "Missing NEXT_PUBLIC_BASE_URL in environment" });
+        }
+        if (!donorInfo?.donorEmail) {
+            return res.status(400).json({ error: "donorInfo.donorEmail is required" });
+        }
+        if (!Array.isArray(selectedServices) || selectedServices.length === 0) {
+            return res.status(400).json({ error: "selectedServices must be a non-empty array" });
+        }
         // 1️⃣ Check if user exists
         let donorUser = await authService_1.default.findUserByEmail(donorInfo.donorEmail);
         if (!donorUser) {
@@ -34,6 +46,11 @@ router.post("/", async (req, res) => {
             phone: donorUser.phone || null,
         };
         // 5️⃣ Create Stripe session
+        const servicesForMetadata = selectedServices.map((svc) => ({
+            _id: String(svc._id ?? svc.id ?? ""),
+            name: String(svc.name ?? ""),
+            serviceFee: Number(svc.serviceFee ?? 0),
+        }));
         const session = await stripe.checkout.sessions.create({
             mode: "payment",
             payment_method_types: ["card"],
@@ -50,9 +67,9 @@ router.post("/", async (req, res) => {
             cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/b2c/appointment/checkout?canceled=true`,
             metadata: {
                 userId: String(donorUser.id),
-                donorEmail: donorInfo.donorEmail,
-                serviceCount: String(selectedServices.length),
-                panelId: donorInfo.panelID,
+                donorEmail: String(donorInfo.donorEmail),
+                donorInfo: JSON.stringify(donorInfo ?? {}),
+                services: JSON.stringify(servicesForMetadata),
             }
         });
         // 6️⃣ Respond with session URL AND user data

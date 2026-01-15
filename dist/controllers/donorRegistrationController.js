@@ -11,6 +11,13 @@ exports.donorRegistrationController = {
             const userId = req.user?.userId;
             if (!userId)
                 return res.status(401).json({ success: false, message: "Unauthorized" });
+            // Basic validation
+            if (!req.body.donorNameFirst || !req.body.donorNameLast) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Donor first name and last name are required"
+                });
+            }
             const data = {
                 ...req.body,
                 userId,
@@ -57,6 +64,9 @@ exports.donorRegistrationController = {
     async getById(req, res) {
         try {
             const id = Number(req.params.id);
+            if (isNaN(id)) {
+                return res.status(400).json({ success: false, message: "Invalid registration ID" });
+            }
             const currentUser = req.user;
             const role = currentUser?.role;
             const registration = await donorRegistrationService_1.donorRegistrationService.getById(id, currentUser?.userId, role);
@@ -72,6 +82,9 @@ exports.donorRegistrationController = {
     async update(req, res) {
         try {
             const id = Number(req.params.id);
+            if (isNaN(id)) {
+                return res.status(400).json({ success: false, message: "Invalid registration ID" });
+            }
             const ip = (0, ipUtils_1.getClientIp)(req);
             const updatedBy = req.user?.userId;
             const role = req.user?.role;
@@ -89,6 +102,9 @@ exports.donorRegistrationController = {
     async softDelete(req, res) {
         try {
             const id = Number(req.params.id);
+            if (isNaN(id)) {
+                return res.status(400).json({ success: false, message: "Invalid registration ID" });
+            }
             const ip = (0, ipUtils_1.getClientIp)(req);
             const updatedBy = req.user?.userId;
             const role = req.user?.role;
@@ -150,7 +166,13 @@ exports.donorRegistrationController = {
     async reject(req, res) {
         try {
             const id = Number(req.params.id);
+            if (isNaN(id)) {
+                return res.status(400).json({ success: false, message: "Invalid registration ID" });
+            }
             const { rejectReason } = req.body;
+            if (!rejectReason) {
+                return res.status(400).json({ success: false, message: "Reject reason is required" });
+            }
             const ip = (0, ipUtils_1.getClientIp)(req);
             const updatedBy = req.user?.userId;
             const role = req.user?.role;

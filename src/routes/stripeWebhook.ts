@@ -6,9 +6,7 @@ import { paymentService } from "../services/paymentService";
 import { getClientIp } from "../utils/ipUtils";
 
 const router = express.Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2025-09-30.clover",
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {});
 
 // Stripe requires raw body for webhooks
 router.post("/", express.raw({ type: "application/json" }), async (req, res) => {
@@ -16,6 +14,12 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
 
     let event: Stripe.Event;
     try {
+        if (!process.env.STRIPE_SECRET_KEY) {
+            return res.status(500).json({ success: false, error: "Missing STRIPE_SECRET_KEY in environment" });
+        }
+        if (!process.env.STRIPE_WEBHOOK_SECRET) {
+            return res.status(500).json({ success: false, error: "Missing STRIPE_WEBHOOK_SECRET in environment" });
+        }
         event = stripe.webhooks.constructEvent(
             req.body,
             sig,

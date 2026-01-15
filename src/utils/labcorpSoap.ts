@@ -1,6 +1,12 @@
 import axios from "axios";
 import { parseStringPromise } from "xml2js";
 
+const requireEnv = (key: string): string => {
+    const value = process.env[key];
+    if (!value) throw new Error(`Missing required environment variable: ${key}`);
+    return value;
+};
+
 // Normalize any value to a trimmed string, including xml2js "_"-wrapped objects
 const normalize = (value: any): string => {
     if (Array.isArray(value)) {
@@ -29,13 +35,17 @@ const stripNamespaces = (obj: any): any => {
 };
 
 export async function locateCollectionSites(zip: string): Promise<any[]> {
+    const soapUrl = requireEnv("LABCORP_SOAP_URL");
+    const userId = requireEnv("LABCORP_USER_ID");
+    const password = requireEnv("LABCORP_PASSWORD");
+
     const xml = `
     <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:web="http://webservice.labcorp.com">
       <soapenv:Header/>
       <soapenv:Body>
         <web:locateCollectionSites>
-          <userId>${process.env.LABCORP_USER_ID}</userId>
-          <password>${process.env.LABCORP_PASSWORD}</password>
+          <userId>${userId}</userId>
+          <password>${password}</password>
           <zip>${zip}</zip>
           <distance>10</distance>
         </web:locateCollectionSites>
@@ -44,7 +54,7 @@ export async function locateCollectionSites(zip: string): Promise<any[]> {
   `;
 
     try {
-        const { data } = await axios.post(process.env.LABCORP_SOAP_URL!, xml, {
+        const { data } = await axios.post(soapUrl, xml, {
             headers: {
                 "Content-Type": "text/xml;charset=UTF-8",
                 SOAPAction: "",
@@ -56,11 +66,26 @@ export async function locateCollectionSites(zip: string): Promise<any[]> {
 
         // console.log("🧾 Parsed SOAP Response:\n", JSON.stringify(clean, null, 2));
 
-        const sites = clean?.Envelope?.Body?.[0]?.locateCollectionSitesResponse?.[0]?.locateCollectionSitesReturn;
-        if (!sites || !Array.isArray(sites)) {
-            console.warn("⚠️ No sites found in SOAP response");
-            return [];
+        const fault = clean?.Envelope?.Body?.[0]?.Fault?.[0];
+        if (fault) {
+            const faultString = normalize(fault.faultstring) || "Unknown SOAP fault";
+            const faultCode = normalize(fault.faultcode) || "SOAPFault";
+            throw new Error(`Labcorp SOAP fault: ${faultCode} - ${faultString}`);
         }
+
+        const sitesNode =
+            clean?.Envelope?.Body?.[0]?.locateCollectionSitesResponse?.[0]?.locateCollectionSitesReturn;
+
+        const sites: any[] | null =
+            Array.isArray(sitesNode)
+                ? sitesNode
+                : Array.isArray(sitesNode?.[0]?.collectionSite)
+                    ? sitesNode[0].collectionSite
+                    : Array.isArray(sitesNode?.collectionSite)
+                        ? sitesNode.collectionSite
+                        : null;
+
+        if (!sites || sites.length === 0) return [];
 
         return sites.map((site: any) => ({
             id: normalize(site.collectionSiteId),
@@ -85,7 +110,7 @@ export async function locateCollectionSites(zip: string): Promise<any[]> {
             code: error.code,
             response: error.response?.data,
         });
-        throw new Error("Failed to fetch Labcorp sites");
+        throw new Error(error?.message || "Failed to fetch Labcorp sites");
     }
 }
 

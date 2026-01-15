@@ -21,8 +21,8 @@ export declare const donorRegistrationService: {
         updatedBy: number | null;
         donorNameFirst: string;
         donorNameLast: string;
-        donorSex: string;
-        donorDateOfBirth: Date;
+        donorSex: string | null;
+        donorDateOfBirth: Date | null;
         donorEmail: string;
         donorStateOfResidence: string;
         donorSSN: string | null;
@@ -57,8 +57,8 @@ export declare const donorRegistrationService: {
             isDelete: boolean;
             createdBy: number;
             updatedBy: number | null;
-            donorSex: string;
-            donorDateOfBirth: Date;
+            donorSex: string | null;
+            donorDateOfBirth: Date | null;
             panelId: string;
             testingAuthority: string | null;
             registrationExpirationDate: Date;
@@ -88,8 +88,8 @@ export declare const donorRegistrationService: {
         isDelete: boolean;
         createdBy: number;
         updatedBy: number | null;
-        donorSex: string;
-        donorDateOfBirth: Date;
+        donorSex: string | null;
+        donorDateOfBirth: Date | null;
         panelId: string;
         testingAuthority: string | null;
         registrationExpirationDate: Date;
@@ -112,8 +112,8 @@ export declare const donorRegistrationService: {
         updatedBy: number | null;
         donorNameFirst: string;
         donorNameLast: string;
-        donorSex: string;
-        donorDateOfBirth: Date;
+        donorSex: string | null;
+        donorDateOfBirth: Date | null;
         donorEmail: string;
         donorStateOfResidence: string;
         donorSSN: string | null;
@@ -141,8 +141,8 @@ export declare const donorRegistrationService: {
         updatedBy: number | null;
         donorNameFirst: string;
         donorNameLast: string;
-        donorSex: string;
-        donorDateOfBirth: Date;
+        donorSex: string | null;
+        donorDateOfBirth: Date | null;
         donorEmail: string;
         donorStateOfResidence: string;
         donorSSN: string | null;
@@ -187,8 +187,8 @@ export declare const donorRegistrationService: {
         updatedBy: number | null;
         donorNameFirst: string;
         donorNameLast: string;
-        donorSex: string;
-        donorDateOfBirth: Date;
+        donorSex: string | null;
+        donorDateOfBirth: Date | null;
         donorEmail: string;
         donorStateOfResidence: string;
         donorSSN: string | null;

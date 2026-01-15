@@ -17,9 +17,27 @@ router.get("/", (req, res, next) => {
         req.query.status === "true" || req.query.status === "false" ? req.query.status : "";
     next();
 }, serviceController_1.serviceController.getAll);
-router.post("/", authMiddleware_1.default.authenticate, uploadMiddleware_1.upload.single("bannerImage"), serviceController_1.serviceController.create);
+// Create service - supports both JSON (with image URL) and form-data (with file upload)
+router.post("/", authMiddleware_1.default.authenticate, (req, res, next) => {
+    // Only use multer if content-type is multipart/form-data
+    if (req.headers['content-type']?.includes('multipart/form-data')) {
+        uploadMiddleware_1.upload.single("bannerImage")(req, res, next);
+    }
+    else {
+        next();
+    }
+}, serviceController_1.serviceController.create);
 router.get("/:id", serviceController_1.serviceController.getById);
-router.put("/:id", authMiddleware_1.default.authenticate, uploadMiddleware_1.upload.single("bannerImage"), serviceController_1.serviceController.update);
+// Update service - supports both JSON (with image URL) and form-data (with file upload)
+router.put("/:id", authMiddleware_1.default.authenticate, (req, res, next) => {
+    // Only use multer if content-type is multipart/form-data
+    if (req.headers['content-type']?.includes('multipart/form-data')) {
+        uploadMiddleware_1.upload.single("bannerImage")(req, res, next);
+    }
+    else {
+        next();
+    }
+}, serviceController_1.serviceController.update);
 router.delete("/:id", authMiddleware_1.default.authenticate, serviceController_1.serviceController.delete);
 exports.default = router;
 //# sourceMappingURL=serviceRoute.js.map

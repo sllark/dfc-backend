@@ -4,6 +4,9 @@ declare class AuthService {
         phone: string | null;
         role: import("../generated/prisma").$Enums.Role;
         username: string;
+        firstName: string | null;
+        lastName: string | null;
+        dateOfBirth: Date | null;
         password: string;
         isActive: boolean;
         lastLogin: Date | null;
@@ -14,9 +17,12 @@ declare class AuthService {
     }>;
     static findUserByEmail: (email: string) => Promise<{
         email: string;
+        firstName: string | null;
+        lastName: string | null;
         phone: string | null;
         role: import("../generated/prisma").$Enums.Role;
         username: string;
+        dateOfBirth: Date | null;
         password: string;
         isActive: boolean;
         lastLogin: Date | null;
@@ -35,9 +41,12 @@ declare class AuthService {
     }>;
     static findUserById: (id: number) => Promise<{
         email: string | null;
+        firstName: string | null;
+        lastName: string | null;
         phone: string | null;
         role: import("../generated/prisma").$Enums.Role;
         username: string;
+        dateOfBirth: Date | null;
         password: string;
         isActive: boolean;
         lastLogin: Date | null;
@@ -50,9 +59,12 @@ declare class AuthService {
         role?: string;
     }) => Promise<{
         email: string | null;
+        firstName: string | null;
+        lastName: string | null;
         phone: string | null;
         role: import("../generated/prisma").$Enums.Role;
         username: string;
+        dateOfBirth: Date | null;
         isActive: boolean;
         lastLogin: Date | null;
         profileImage: string | null;
@@ -62,14 +74,21 @@ declare class AuthService {
     }[]>;
     static updateUser: (id: number, data: {
         username?: string;
+        email?: string;
+        firstName?: string;
+        lastName?: string;
+        dateOfBirth?: string | Date;
         phone?: string;
         profileImage?: string;
         password?: string;
     }) => Promise<{
+        email: string | null;
+        firstName: string | null;
+        lastName: string | null;
         phone: string | null;
         role: import("../generated/prisma").$Enums.Role;
         username: string;
-        email: string;
+        dateOfBirth: Date | null;
         isActive: boolean;
         lastLogin: Date | null;
         profileImage: string | null;

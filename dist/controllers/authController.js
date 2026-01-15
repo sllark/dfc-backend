@@ -9,16 +9,27 @@ class AuthController {
     static signup = async (req, res) => {
         try {
             const { username, email, password, phone } = req.body;
+            // Validate input
+            if (!username || !email || !password) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Username, email, and password are required"
+                });
+            }
             // Check if user already exists
             const existingUser = await authService_1.default.findUserByEmail(email);
             if (existingUser) {
-                return res.status(400).json({ message: "User already exists" });
+                return res.status(400).json({
+                    success: false,
+                    message: "User already exists"
+                });
             }
             // Register new user
             const user = await authService_1.default.registerUser(username, email, password, phone);
             // ✅ Generate token immediately for this new user
             const token = authService_1.default.generateToken({ id: user.id, role: user.role });
             return res.status(201).json({
+                success: true,
                 message: "User registered successfully",
                 user: {
                     ...user,
@@ -29,6 +40,7 @@ class AuthController {
         catch (error) {
             console.error("Signup Error:", error);
             return res.status(400).json({
+                success: false,
                 message: "Registration failed",
                 error: error.message,
             });
@@ -38,49 +50,63 @@ class AuthController {
     static login = async (req, res) => {
         try {
             const { email, password } = req.body;
+            // Validate input
+            if (!email || !password) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Email and password are required'
+                });
+            }
             const loginResult = await authService_1.default.loginUser(email, password);
-            return res.status(200).json(loginResult);
+            return res.status(200).json({
+                success: true,
+                ...loginResult
+            });
         }
         catch (error) {
             console.error('Login Error:', error);
-            return res.status(400).json({ message: 'Login failed', error: error.message });
+            return res.status(400).json({
+                success: false,
+                message: 'Login failed',
+                error: error.message
+            });
         }
     };
     // ====================== Get User By ID ======================
     static getUserById = async (req, res) => {
         try {
             if (!req.user)
-                return res.status(401).json({ message: "Unauthorized" });
+                return res.status(401).json({ success: false, message: "Unauthorized" });
             const userId = parseInt(req.params.id ?? "", 10);
             if (isNaN(userId))
-                return res.status(400).json({ message: "Invalid user ID" });
+                return res.status(400).json({ success: false, message: "Invalid user ID" });
             // Admins or the user themselves can access
             if (req.user.role !== "ADMIN" && req.user.userId !== userId) {
-                return res.status(403).json({ message: "Forbidden: Access denied" });
+                return res.status(403).json({ success: false, message: "Forbidden: Access denied" });
             }
             const foundUser = await authService_1.default.findUserById(userId);
             if (!foundUser)
-                return res.status(404).json({ message: "User not found" });
-            return res.status(200).json(foundUser);
+                return res.status(404).json({ success: false, message: "User not found" });
+            return res.status(200).json({ success: true, data: foundUser });
         }
         catch (error) {
             console.error("GetUserById Error:", error);
-            return res.status(500).json({ message: "Error retrieving user", error: error.message });
+            return res.status(500).json({ success: false, message: "Error retrieving user", error: error.message });
         }
     };
     // ====================== Get All Users (Admin Only) ======================
     static getAllUsers = async (req, res) => {
         try {
             if (!req.user || req.user.role !== "ADMIN") {
-                return res.status(403).json({ message: "Forbidden: Admins only" });
+                return res.status(403).json({ success: false, message: "Forbidden: Admins only" });
             }
             const { role } = req.query;
             const users = await authService_1.default.getAllUsers({ role: role });
-            return res.status(200).json(users);
+            return res.status(200).json({ success: true, data: users });
         }
         catch (error) {
             console.error("GetAllUsers Error:", error);
-            return res.status(500).json({ message: "Error retrieving users", error: error.message });
+            return res.status(500).json({ success: false, message: "Error retrieving users", error: error.message });
         }
     };
     // ====================== Update User ======================
@@ -88,20 +114,28 @@ class AuthController {
         const authReq = req;
         try {
             if (!authReq.user)
-                return res.status(401).json({ message: "Unauthorized" });
+                return res.status(401).json({ success: false, message: "Unauthorized" });
             const userIdStr = authReq.params.id;
             if (!userIdStr)
-                return res.status(400).json({ message: "User ID is required" });
+                return res.status(400).json({ success: false, message: "User ID is required" });
             const userId = parseInt(userIdStr, 10);
             if (isNaN(userId))
-                return res.status(400).json({ message: "Invalid user ID" });
+                return res.status(400).json({ success: false, message: "Invalid user ID" });
             if (authReq.user.role !== "ADMIN" && authReq.user.userId !== userId) {
-                return res.status(403).json({ message: "Forbidden: Access denied" });
+                return res.status(403).json({ success: false, message: "Forbidden: Access denied" });
             }
-            const { username, phone, password } = authReq.body;
+            const { username, email, firstName, lastName, dateOfBirth, phone, password } = authReq.body;
             const updateData = {};
             if (username)
                 updateData.username = username;
+            if (email)
+                updateData.email = email;
+            if (firstName)
+                updateData.firstName = firstName;
+            if (lastName)
+                updateData.lastName = lastName;
+            if (dateOfBirth)
+                updateData.dateOfBirth = dateOfBirth;
             if (phone)
                 updateData.phone = phone;
             if (password)
@@ -109,11 +143,11 @@ class AuthController {
             if (authReq.file)
                 updateData.profileImage = `/uploads/${authReq.file.filename}`;
             const updatedUser = await authService_1.default.updateUser(userId, updateData);
-            return res.status(200).json({ message: "User updated successfully", user: updatedUser });
+            return res.status(200).json({ success: true, message: "User updated successfully", user: updatedUser });
         }
         catch (error) {
             console.error("UpdateUser Error:", error);
-            return res.status(500).json({ message: "Error updating user", error: error.message });
+            return res.status(500).json({ success: false, message: "Error updating user", error: error.message });
         }
     };
     // ====================== Logout ======================
@@ -130,33 +164,42 @@ class AuthController {
     static forgotPassword = async (req, res) => {
         try {
             const { email } = req.body;
+            if (!email) {
+                return res.status(400).json({ success: false, message: "Email is required" });
+            }
             const result = await authService_1.default.sendPasswordResetOTP(email);
-            return res.status(200).json(result);
+            return res.status(200).json({ success: true, ...result });
         }
         catch (err) {
-            return res.status(400).json({ message: err.message || "Failed to send OTP" });
+            return res.status(400).json({ success: false, message: err.message || "Failed to send OTP" });
         }
     };
     // ====================== Verify OTP ======================
     static verifyOTP = async (req, res) => {
         try {
             const { email, otp } = req.body;
+            if (!email || !otp) {
+                return res.status(400).json({ success: false, message: "Email and OTP are required" });
+            }
             const result = await authService_1.default.verifyOTP(email, otp);
-            return res.status(200).json(result);
+            return res.status(200).json({ success: true, ...result });
         }
         catch (err) {
-            return res.status(400).json({ error: err.message });
+            return res.status(400).json({ success: false, message: err.message });
         }
     };
     // ====================== Reset Password ======================
     static resetPassword = async (req, res) => {
         try {
             const { email, otp, newPassword } = req.body;
+            if (!email || !otp || !newPassword) {
+                return res.status(400).json({ success: false, message: "Email, OTP, and new password are required" });
+            }
             const result = await authService_1.default.resetPassword(email, otp, newPassword);
-            return res.status(200).json(result);
+            return res.status(200).json({ success: true, ...result });
         }
         catch (err) {
-            return res.status(400).json({ error: err.message });
+            return res.status(400).json({ success: false, message: err.message });
         }
     };
 }
