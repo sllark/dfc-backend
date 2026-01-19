@@ -164,6 +164,45 @@ class AuthController {
         }
     };
 
+    // ====================== Update Profile (Current User) ======================
+    static updateProfile = async (req: Request, res: Response) => {
+        const authReq = req as AuthenticatedRequest;
+
+        try {
+            if (!authReq.user) return res.status(401).json({ success: false, message: "Unauthorized" });
+
+            // Only update the authenticated user's own profile
+            const userId = authReq.user.userId;
+
+            const { firstName, lastName, dateOfBirth, phone } = authReq.body as {
+                firstName?: string;
+                lastName?: string;
+                dateOfBirth?: string;
+                phone?: string;
+            };
+
+            const updateData: {
+                firstName?: string;
+                lastName?: string;
+                dateOfBirth?: string;
+                phone?: string;
+                profileImage?: string;
+            } = {};
+
+            if (firstName) updateData.firstName = firstName;
+            if (lastName) updateData.lastName = lastName;
+            if (dateOfBirth) updateData.dateOfBirth = dateOfBirth;
+            if (phone) updateData.phone = phone;
+            if (authReq.file) updateData.profileImage = `/uploads/${authReq.file.filename}`;
+
+            const updatedUser = await AuthService.updateUser(userId, updateData);
+            return res.status(200).json({ success: true, message: "Profile updated successfully", user: updatedUser });
+        } catch (error: any) {
+            console.error("UpdateProfile Error:", error);
+            return res.status(500).json({ success: false, message: "Error updating profile", error: error.message });
+        }
+    };
+
     // ====================== Logout ======================
     static logout = async (req: AuthenticatedRequest, res: Response) => {
         try {

@@ -35,6 +35,14 @@ router.post("/forgot-password", AuthController.forgotPassword);
 router.post("/verify-otp", AuthController.verifyOTP);
 router.post("/reset-password", AuthController.resetPassword);
 
+// ✅ Update profile for the currently authenticated user
+router.put(
+    "/update-profile",
+    AuthMiddleware.authenticate,
+    upload.single("profileImage"),
+    AuthController.updateProfile
+);
+
 router.put(
     "/user/:id",
     AuthMiddleware.authenticate,

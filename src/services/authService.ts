@@ -70,7 +70,24 @@ class AuthService {
 
     // ====================== Find User By ID ======================
     static findUserById = async (id: number) => {
-        const user = await prisma.user.findUnique({ where: { id } });
+        const user = await prisma.user.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                dateOfBirth: true,
+                role: true,
+                isActive: true,
+                lastLogin: true,
+                profileImage: true,
+                phone: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
         if (!user) return null;
 
         return {

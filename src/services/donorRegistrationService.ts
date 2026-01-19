@@ -55,12 +55,27 @@ export const donorRegistrationService = {
         if (!data.registrationExpirationDate)
             throw new Error("registrationExpirationDate is required");
 
+        // Convert date strings to Date objects
+        let donorDateOfBirth: Date | undefined = undefined;
+        if (data.donorDateOfBirth) {
+            const dob = data.donorDateOfBirth instanceof Date ? data.donorDateOfBirth : new Date(data.donorDateOfBirth);
+            if (isNaN(dob.getTime())) throw new Error("Invalid donorDateOfBirth");
+            donorDateOfBirth = dob;
+        }
+
+        let registrationExpirationDate: Date;
+        const regExpDate = data.registrationExpirationDate instanceof Date 
+            ? data.registrationExpirationDate 
+            : new Date(data.registrationExpirationDate);
+        if (isNaN(regExpDate.getTime())) throw new Error("Invalid registrationExpirationDate");
+        registrationExpirationDate = regExpDate;
+
         const encryptedData: Prisma.DonorRegistrationUncheckedCreateInput = {
             userId: data.userId,
             donorNameFirst: encrypt(data.donorNameFirst),
             donorNameLast: encrypt(data.donorNameLast),
             donorSex: encrypt(data.donorSex ?? ""),
-            donorDateOfBirth: data.donorDateOfBirth,
+            donorDateOfBirth: donorDateOfBirth,
             donorEmail: encrypt(data.donorEmail),
             donorStateOfResidence: encrypt(data.donorStateOfResidence),
             donorSSN: data.donorSSN ? encrypt(data.donorSSN) : undefined,
@@ -69,7 +84,7 @@ export const donorRegistrationService = {
             serviceId: data.serviceId ? encryptDeterministic(data.serviceId) : undefined,
             accountNo: data.accountNo ? encryptDeterministic(data.accountNo) : undefined,
             panelId: data.panelId,
-            registrationExpirationDate: data.registrationExpirationDate,
+            registrationExpirationDate: registrationExpirationDate,
             labcorpRegistrationNumber: data.labcorpRegistrationNumber || "",
             status: data.status || "PENDING",
             createdBy: data.createdBy,
@@ -181,6 +196,23 @@ export const donorRegistrationService = {
         if (role !== "ADMIN" && existing.userId !== updatedBy)
             throw new Error("Unauthorized to update this registration");
 
+        // Convert date strings to Date objects if provided
+        let donorDateOfBirth: Date | undefined = undefined;
+        if (data.donorDateOfBirth) {
+            const dob = data.donorDateOfBirth instanceof Date ? data.donorDateOfBirth : new Date(data.donorDateOfBirth as string);
+            if (isNaN(dob.getTime())) throw new Error("Invalid donorDateOfBirth");
+            donorDateOfBirth = dob;
+        }
+
+        let registrationExpirationDate: Date | undefined = undefined;
+        if (data.registrationExpirationDate) {
+            const regExpDate = data.registrationExpirationDate instanceof Date 
+                ? data.registrationExpirationDate 
+                : new Date(data.registrationExpirationDate as string);
+            if (isNaN(regExpDate.getTime())) throw new Error("Invalid registrationExpirationDate");
+            registrationExpirationDate = regExpDate;
+        }
+
         const encryptedData: Prisma.DonorRegistrationUncheckedUpdateInput = {
             // required fields
             donorNameFirst: data.donorNameFirst ? encrypt(data.donorNameFirst as string) : existing.donorNameFirst,
@@ -191,13 +223,14 @@ export const donorRegistrationService = {
                 : existing.donorStateOfResidence,
 
             // optional/nullable fields
+            donorDateOfBirth: donorDateOfBirth ?? existing.donorDateOfBirth,
             donorSSN: data.donorSSN ? encrypt(data.donorSSN as string) : existing.donorSSN,
             reasonForTest: data.reasonForTest ? encrypt(data.reasonForTest as string) : existing.reasonForTest,
             serviceId: data.serviceId ? encryptDeterministic(data.serviceId as string) : existing.serviceId,
             accountNo: data.accountNo ? encryptDeterministic(data.accountNo as string) : existing.accountNo,
 
             panelId: data.panelId ?? existing.panelId,
-            registrationExpirationDate: data.registrationExpirationDate ?? existing.registrationExpirationDate,
+            registrationExpirationDate: registrationExpirationDate ?? existing.registrationExpirationDate,
             labcorpRegistrationNumber: data.labcorpRegistrationNumber ?? existing.labcorpRegistrationNumber,
 
             updatedBy,
