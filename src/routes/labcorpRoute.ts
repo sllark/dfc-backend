@@ -1,6 +1,14 @@
 import { Router, Request, Response } from "express";
+import AuthMiddleware from "../middlewares/authMiddleware";
+import { labcorpController } from "../controllers/labcorpController";
 
 const router = Router();
+
+// Locate collection sites by zip code (requires authentication)
+router.post("/locate-sites", AuthMiddleware.authenticate, labcorpController.locateSites);
+
+// Select location for order placement (requires authentication)
+router.post("/select-location", AuthMiddleware.authenticate, labcorpController.selectLocation);
 
 // Debug endpoint to check if credentials are loaded and test connectivity
 router.get("/debug", async (req: Request, res: Response) => {
