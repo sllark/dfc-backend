@@ -7,8 +7,11 @@ const router = Router();
 // CREATE payment
 router.post("/", AuthMiddleware.authenticate, paymentController.create);
 
-// GET all payments
+// GET all payments (paginated)
 router.get("/", AuthMiddleware.authenticate, paymentController.getAll);
+
+// GET all payments (no pagination)
+router.get("/all", AuthMiddleware.authenticate, paymentController.getAllWithoutPagination);
 
 // GET payment by ID
 router.get("/:id", AuthMiddleware.authenticate, paymentController.getById);

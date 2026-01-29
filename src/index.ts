@@ -72,7 +72,7 @@ app.use('/api/donors', donorRegistrationRoutes);
 // Payment routes (authenticated users)
 app.use('/api/payments', AuthMiddleware.authenticate, paymentRoutes);
 
-// Labcorp
+// Labcorp routes
 app.use('/api/labcorp', labcorpRoute);
 
 // ✅ New GET endpoint to fetch completed session/payment info
