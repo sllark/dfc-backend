@@ -1,6 +1,7 @@
 import AuthService from '../services/authService';
 import type { Request, Response } from 'express';
 import { AuthenticatedRequest } from '../utils/types';
+import { uploadFile } from '../middlewares/uploadMiddleware';
 
 class AuthController {
     // ====================== User Registration ======================
@@ -154,7 +155,7 @@ class AuthController {
             if (dateOfBirth) updateData.dateOfBirth = dateOfBirth;
             if (phone) updateData.phone = phone;
             if (password) updateData.password = password;
-            if (authReq.file) updateData.profileImage = `/uploads/${authReq.file.filename}`;
+            if (authReq.file) updateData.profileImage = await uploadFile(authReq.file);
 
             const updatedUser = await AuthService.updateUser(userId, updateData);
             return res.status(200).json({ success: true, message: "User updated successfully", user: updatedUser });
@@ -193,7 +194,7 @@ class AuthController {
             if (lastName) updateData.lastName = lastName;
             if (dateOfBirth) updateData.dateOfBirth = dateOfBirth;
             if (phone) updateData.phone = phone;
-            if (authReq.file) updateData.profileImage = `/uploads/${authReq.file.filename}`;
+            if (authReq.file) updateData.profileImage = await uploadFile(authReq.file);
 
             const updatedUser = await AuthService.updateUser(userId, updateData);
             return res.status(200).json({ success: true, message: "Profile updated successfully", user: updatedUser });

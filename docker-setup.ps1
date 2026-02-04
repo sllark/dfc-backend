@@ -122,16 +122,30 @@ if ($LASTEXITCODE -eq 0) {
 Write-Host ""
 Write-Host "=== Setup Complete! ===" -ForegroundColor Green
 Write-Host ""
-Write-Host "PostgreSQL is now running in Docker:" -ForegroundColor Cyan
-Write-Host "  Container: drugfreecompliance-postgres" -ForegroundColor White
-Write-Host "  Port: 5432" -ForegroundColor White
-Write-Host "  Database: mybizhelperapi" -ForegroundColor White
+Write-Host "Services are now running in Docker:" -ForegroundColor Cyan
+Write-Host "  PostgreSQL:" -ForegroundColor White
+Write-Host "    Container: drugfreecompliance-postgres" -ForegroundColor Gray
+Write-Host "    Port: 5432" -ForegroundColor Gray
+Write-Host "    Database: mybizhelperapi" -ForegroundColor Gray
+Write-Host ""
+Write-Host "  Mailpit (Email Testing):" -ForegroundColor White
+Write-Host "    Container: drugfreecompliance-mailpit" -ForegroundColor Gray
+Write-Host "    SMTP Port: 1025" -ForegroundColor Gray
+Write-Host "    Web UI: http://localhost:8025" -ForegroundColor Gray
+Write-Host ""
+Write-Host "  pgAdmin:" -ForegroundColor White
+Write-Host "    Container: drugfreecompliance-pgadmin" -ForegroundColor Gray
+Write-Host "    Web UI: http://localhost:5050" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Useful commands:" -ForegroundColor Cyan
 Write-Host "  docker ps                          # View running containers" -ForegroundColor White
-Write-Host "  docker logs drugfreecompliance-postgres  # View logs" -ForegroundColor White
-Write-Host "  docker stop drugfreecompliance-postgres  # Stop container" -ForegroundColor White
-Write-Host "  docker start drugfreecompliance-postgres # Start container" -ForegroundColor White
-Write-Host "  docker-compose down                 # Stop and remove container" -ForegroundColor White
+Write-Host "  docker logs drugfreecompliance-postgres  # View PostgreSQL logs" -ForegroundColor White
+Write-Host "  docker logs drugfreecompliance-mailpit    # View Mailpit logs" -ForegroundColor White
+Write-Host "  docker-compose down                 # Stop and remove all containers" -ForegroundColor White
+Write-Host "  docker-compose up -d               # Start all services" -ForegroundColor White
+Write-Host ""
+Write-Host "Email Testing:" -ForegroundColor Cyan
+Write-Host "  All emails sent from the app will be captured by Mailpit" -ForegroundColor White
+Write-Host "  View them at: http://localhost:8025" -ForegroundColor Yellow
 Write-Host ""
 

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Prisma } from "../generated/prisma";
 import { serviceService } from "../services/serviceService";
 import { encryptDeterministic } from "../utils/encryption";
+import { uploadFile } from "../middlewares/uploadMiddleware";
 
 export const serviceController = {
     // ✅ Create new service
@@ -20,8 +21,8 @@ export const serviceController = {
             // Handle banner image: either from file upload or URL from body
             let bannerImage: string | null = null;
             if (req.file) {
-                // File uploaded via form-data
-                bannerImage = `/uploads/${req.file.filename}`;
+                // File uploaded via form-data - upload to Cloudinary or local
+                bannerImage = await uploadFile(req.file);
             } else if (req.body.bannerImage) {
                 // Image URL provided in JSON body
                 bannerImage = req.body.bannerImage;
@@ -110,8 +111,9 @@ export const serviceController = {
             // Handle banner image: either from file upload or URL from body
             let bannerImageUpdate: { bannerImage: string } | {} = {};
             if (req.file) {
-                // File uploaded via form-data
-                bannerImageUpdate = { bannerImage: `/uploads/${req.file.filename}` };
+                // File uploaded via form-data - upload to Cloudinary or local
+                const uploadedUrl = await uploadFile(req.file);
+                bannerImageUpdate = { bannerImage: uploadedUrl };
             } else if (req.body.bannerImage !== undefined) {
                 // Image URL provided in JSON body (can be null to remove image)
                 bannerImageUpdate = { bannerImage: req.body.bannerImage || null };
