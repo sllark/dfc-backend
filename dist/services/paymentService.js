@@ -41,6 +41,19 @@ exports.paymentService = {
         ]);
         return { data, total };
     },
+    // GET ALL PAYMENTS (NO PAGINATION)
+    async getAllWithoutPagination({ status, requestingUserId, role }) {
+        const where = {
+            isDelete: false,
+            ...(status ? { status } : {}),
+            ...(role !== "ADMIN" ? { userId: requestingUserId } : {}),
+        };
+        const data = await prisma.payment.findMany({
+            where,
+            orderBy: { createdAt: "desc" },
+        });
+        return { data, total: data.length };
+    },
     // GET PAYMENT BY ID
     async getById(id, requestingUserId, role) {
         const payment = await prisma.payment.findUnique({ where: { id } });

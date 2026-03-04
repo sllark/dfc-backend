@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const authService_1 = __importDefault(require("../services/authService"));
+const uploadMiddleware_1 = require("../middlewares/uploadMiddleware");
 class AuthController {
     // ====================== User Registration ======================
     static signup = async (req, res) => {
@@ -141,13 +142,41 @@ class AuthController {
             if (password)
                 updateData.password = password;
             if (authReq.file)
-                updateData.profileImage = `/uploads/${authReq.file.filename}`;
+                updateData.profileImage = await (0, uploadMiddleware_1.uploadFile)(authReq.file);
             const updatedUser = await authService_1.default.updateUser(userId, updateData);
             return res.status(200).json({ success: true, message: "User updated successfully", user: updatedUser });
         }
         catch (error) {
             console.error("UpdateUser Error:", error);
             return res.status(500).json({ success: false, message: "Error updating user", error: error.message });
+        }
+    };
+    // ====================== Update Profile (Current User) ======================
+    static updateProfile = async (req, res) => {
+        const authReq = req;
+        try {
+            if (!authReq.user)
+                return res.status(401).json({ success: false, message: "Unauthorized" });
+            // Only update the authenticated user's own profile
+            const userId = authReq.user.userId;
+            const { firstName, lastName, dateOfBirth, phone } = authReq.body;
+            const updateData = {};
+            if (firstName)
+                updateData.firstName = firstName;
+            if (lastName)
+                updateData.lastName = lastName;
+            if (dateOfBirth)
+                updateData.dateOfBirth = dateOfBirth;
+            if (phone)
+                updateData.phone = phone;
+            if (authReq.file)
+                updateData.profileImage = await (0, uploadMiddleware_1.uploadFile)(authReq.file);
+            const updatedUser = await authService_1.default.updateUser(userId, updateData);
+            return res.status(200).json({ success: true, message: "Profile updated successfully", user: updatedUser });
+        }
+        catch (error) {
+            console.error("UpdateProfile Error:", error);
+            return res.status(500).json({ success: false, message: "Error updating profile", error: error.message });
         }
     };
     // ====================== Logout ======================

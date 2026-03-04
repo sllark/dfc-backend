@@ -5,8 +5,7 @@ import path from 'path';
 
 import AuthRoutes from './routes/authRoute';
 import serviceRoutes from './routes/serviceRoute';
-import donorRegistrationRoutes from './routes/donorRegistrationRoutes'; // ✅ new import
-
+import donorRegistrationRoutes from './routes/donorRegistrationRoutes';
 import AuthMiddleware from './middlewares/authMiddleware';
 import paymentRoutes from "./routes/paymentRoutes";
 import labcorpRoute from "./routes/labcorpRoute";
@@ -41,7 +40,6 @@ const app = express();
 
 // ===== Middlewares =====
 app.use(cors({
-    // origin: ["http://localhost:3001", "http://localhost:3002"],
     origin: ["https://drugfreecomplience.vercel.app", "https://frontend.dfctest.com", "https://admin.dfctest.com", "https://dfctest.com","http://localhost:4000","http://localhost:3000","http://localhost:3001"],
     credentials: true,
 }));
@@ -66,7 +64,6 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api', AuthRoutes);
 app.use('/api/services', serviceRoutes);
 
-// ✅ Donor registration routes (requires auth)
 app.use('/api/donors', donorRegistrationRoutes);
 
 // Payment routes (authenticated users)
@@ -75,10 +72,7 @@ app.use('/api/payments', AuthMiddleware.authenticate, paymentRoutes);
 // Labcorp routes
 app.use('/api/labcorp', labcorpRoute);
 
-// ✅ New GET endpoint to fetch completed session/payment info
 app.use("/api/stripe", stripeSessionRouter);
-
-// For other routes, use normal JSON parser
 app.use("/api/checkout", stripeCheckoutRouter);
 
 // ===== Health Check (must be before 404 handler) =====

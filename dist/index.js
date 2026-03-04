@@ -60,7 +60,7 @@ app.use('/api/services', serviceRoute_1.default);
 app.use('/api/donors', donorRegistrationRoutes_1.default);
 // Payment routes (authenticated users)
 app.use('/api/payments', authMiddleware_1.default.authenticate, paymentRoutes_1.default);
-// Labcorp
+// Labcorp routes
 app.use('/api/labcorp', labcorpRoute_1.default);
 // ✅ New GET endpoint to fetch completed session/payment info
 app.use("/api/stripe", stripeSession_1.default);

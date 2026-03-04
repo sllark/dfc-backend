@@ -53,6 +53,29 @@ exports.paymentController = {
             res.status(500).json({ success: false, message: error.message });
         }
     },
+    // GET ALL PAYMENTS (NO PAGINATION)
+    async getAllWithoutPagination(req, res) {
+        try {
+            const status = typeof req.query.status === "string" ? req.query.status : undefined;
+            const userId = req.user.userId;
+            const role = req.user.role;
+            const { data, total } = await paymentService_1.paymentService.getAllWithoutPagination({
+                status,
+                requestingUserId: userId,
+                role,
+            });
+            res.json({
+                success: true,
+                data,
+                meta: {
+                    total,
+                },
+            });
+        }
+        catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    },
     // GET PAYMENT BY ID
     async getById(req, res) {
         try {

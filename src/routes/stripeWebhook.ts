@@ -1,4 +1,3 @@
-// routes/stripeWebhook.ts
 import express from "express";
 import Stripe from "stripe";
 import { donorRegistrationService } from "../services/donorRegistrationService";

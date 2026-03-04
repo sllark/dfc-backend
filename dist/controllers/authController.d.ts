@@ -6,6 +6,7 @@ declare class AuthController {
     static getUserById: (req: AuthenticatedRequest, res: Response) => Promise<Response<any, Record<string, any>>>;
     static getAllUsers: (req: AuthenticatedRequest, res: Response) => Promise<Response<any, Record<string, any>>>;
     static updateUser: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
+    static updateProfile: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
     static logout: (req: AuthenticatedRequest, res: Response) => Promise<Response<any, Record<string, any>>>;
     static forgotPassword: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
     static verifyOTP: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;

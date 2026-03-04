@@ -1,0 +1,28 @@
+# Dependencies and build output (rebuilt in container)
+node_modules
+dist
+npm-debug.log*
+
+# Environment (passed at runtime via compose env_file)
+.env
+.env.*
+
+# Git and IDE
+.git
+.gitignore
+.idea
+*.iml
+.DS_Store
+
+# Docs and misc
+README.md
+*.md
+*.zip
+*.bat
+*.ps1
+
+# Prisma generate runs in Docker; ignore local generated client
+src/generated
+
+# Optional: exclude uploads if you mount as volume
+# uploads

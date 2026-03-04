@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from "../utils/types";
 export declare const paymentController: {
     create(req: AuthenticatedRequest, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     getAll(req: AuthenticatedRequest, res: Response): Promise<void>;
+    getAllWithoutPagination(req: AuthenticatedRequest, res: Response): Promise<void>;
     getById(req: AuthenticatedRequest, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     updateStatus(req: AuthenticatedRequest, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     softDelete(req: AuthenticatedRequest, res: Response): Promise<Response<any, Record<string, any>> | undefined>;

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { donorRegistrationController } from "../controllers/donorRegistrationController";
 import AuthMiddleware from "../middlewares/authMiddleware";
-import { upload } from "../middlewares/uploadMiddleware"; // if you plan to upload documents/images
+import { upload } from "../middlewares/uploadMiddleware";
 
 const router = Router();
 
@@ -41,7 +41,6 @@ router.delete(
 );
 
 // CONFIRM a donor registration (ADMIN only)
-// In your routes file
 router.post('/donor-registration/confirm-direct', AuthMiddleware.authenticate, donorRegistrationController.confirmDirect);
 
 // REJECT a donor registration (ADMIN only)

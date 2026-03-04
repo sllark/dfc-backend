@@ -9,8 +9,10 @@ const authMiddleware_1 = __importDefault(require("../middlewares/authMiddleware"
 const router = (0, express_1.Router)();
 // CREATE payment
 router.post("/", authMiddleware_1.default.authenticate, paymentController_1.paymentController.create);
-// GET all payments
+// GET all payments (paginated)
 router.get("/", authMiddleware_1.default.authenticate, paymentController_1.paymentController.getAll);
+// GET all payments (no pagination)
+router.get("/all", authMiddleware_1.default.authenticate, paymentController_1.paymentController.getAllWithoutPagination);
 // GET payment by ID
 router.get("/:id", authMiddleware_1.default.authenticate, paymentController_1.paymentController.getById);
 // UPDATE payment status

@@ -45,23 +45,53 @@ router.post("/", async (req, res) => {
             email: donorUser.email,
             phone: donorUser.phone || null,
         };
-        // 5️⃣ Create Stripe session
-        const servicesForMetadata = selectedServices.map((svc) => ({
-            _id: String(svc._id ?? svc.id ?? ""),
-            name: String(svc.name ?? ""),
-            serviceFee: Number(svc.serviceFee ?? 0),
-        }));
+        // 5️⃣ Validate and prepare services
+        console.log("📦 Received selectedServices:", JSON.stringify(selectedServices, null, 2));
+        const validatedServices = selectedServices.map((svc, index) => {
+            // Try multiple possible field names for the price
+            const serviceFee = Number(svc.serviceFee ?? svc.price ?? svc.amount ?? svc.fee ?? 0);
+            console.log(`🔍 Validating service ${index}:`, {
+                original: svc,
+                serviceFee: serviceFee,
+                isNaN: isNaN(serviceFee),
+                isValid: !isNaN(serviceFee) && serviceFee > 0
+            });
+            if (isNaN(serviceFee) || serviceFee <= 0) {
+                throw new Error(`Invalid serviceFee for service at index ${index}. ` +
+                    `Received: ${JSON.stringify(svc)}, ` +
+                    `Parsed serviceFee: ${serviceFee}, ` +
+                    `Expected: a positive number. ` +
+                    `Please ensure the service object has a valid 'serviceFee', 'price', 'amount', or 'fee' field.`);
+            }
+            return {
+                _id: String(svc._id ?? svc.id ?? ""),
+                name: String(svc.name ?? "Unnamed Service"),
+                serviceFee: serviceFee,
+            };
+        });
+        console.log("✅ Validated services:", JSON.stringify(validatedServices, null, 2));
+        // 6️⃣ Create Stripe session
+        const lineItems = validatedServices.map((svc) => {
+            // Convert dollars to cents (Stripe requires amount in cents)
+            const unitAmount = Math.round(svc.serviceFee * 100);
+            if (isNaN(unitAmount) || unitAmount <= 0) {
+                throw new Error(`Invalid unit_amount calculated for service: ${svc.name}`);
+            }
+            return {
+                price_data: {
+                    currency: "usd",
+                    product_data: {
+                        name: svc.name,
+                    },
+                    unit_amount: unitAmount,
+                },
+                quantity: 1,
+            };
+        });
         const session = await stripe.checkout.sessions.create({
             mode: "payment",
             payment_method_types: ["card"],
-            line_items: selectedServices.map((svc) => ({
-                price_data: {
-                    currency: "usd",
-                    product_data: { name: svc.name },
-                    unit_amount: svc.serviceFee * 100,
-                },
-                quantity: 1,
-            })),
+            line_items: lineItems,
             customer_email: donorInfo.donorEmail,
             success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/b2c/appointment/confirmation?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/b2c/appointment/checkout?canceled=true`,
@@ -69,7 +99,7 @@ router.post("/", async (req, res) => {
                 userId: String(donorUser.id),
                 donorEmail: String(donorInfo.donorEmail),
                 donorInfo: JSON.stringify(donorInfo ?? {}),
-                services: JSON.stringify(servicesForMetadata),
+                services: JSON.stringify(validatedServices),
             }
         });
         // 6️⃣ Respond with session URL AND user data
@@ -77,7 +107,18 @@ router.post("/", async (req, res) => {
     }
     catch (err) {
         console.error("Checkout error:", err);
-        res.status(500).json({ error: err.message });
+        // Provide more detailed error messages
+        let errorMessage = err.message || "An error occurred during checkout";
+        if (err.type === 'StripeInvalidRequestError') {
+            errorMessage = `Stripe error: ${err.message}`;
+            if (err.param) {
+                errorMessage += ` (Parameter: ${err.param})`;
+            }
+        }
+        res.status(500).json({
+            error: errorMessage,
+            details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+        });
     }
 });
 exports.default = router;

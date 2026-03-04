@@ -40,12 +40,27 @@ exports.donorRegistrationService = {
             throw new Error("panelId is required");
         if (!data.registrationExpirationDate)
             throw new Error("registrationExpirationDate is required");
+        // Convert date strings to Date objects
+        let donorDateOfBirth = undefined;
+        if (data.donorDateOfBirth) {
+            const dob = data.donorDateOfBirth instanceof Date ? data.donorDateOfBirth : new Date(data.donorDateOfBirth);
+            if (isNaN(dob.getTime()))
+                throw new Error("Invalid donorDateOfBirth");
+            donorDateOfBirth = dob;
+        }
+        let registrationExpirationDate;
+        const regExpDate = data.registrationExpirationDate instanceof Date
+            ? data.registrationExpirationDate
+            : new Date(data.registrationExpirationDate);
+        if (isNaN(regExpDate.getTime()))
+            throw new Error("Invalid registrationExpirationDate");
+        registrationExpirationDate = regExpDate;
         const encryptedData = {
             userId: data.userId,
             donorNameFirst: (0, encryption_1.encrypt)(data.donorNameFirst),
             donorNameLast: (0, encryption_1.encrypt)(data.donorNameLast),
             donorSex: (0, encryption_1.encrypt)(data.donorSex ?? ""),
-            donorDateOfBirth: data.donorDateOfBirth,
+            donorDateOfBirth: donorDateOfBirth,
             donorEmail: (0, encryption_1.encrypt)(data.donorEmail),
             donorStateOfResidence: (0, encryption_1.encrypt)(data.donorStateOfResidence),
             donorSSN: data.donorSSN ? (0, encryption_1.encrypt)(data.donorSSN) : undefined,
@@ -54,7 +69,7 @@ exports.donorRegistrationService = {
             serviceId: data.serviceId ? (0, encryption_1.encryptDeterministic)(data.serviceId) : undefined,
             accountNo: data.accountNo ? (0, encryption_1.encryptDeterministic)(data.accountNo) : undefined,
             panelId: data.panelId,
-            registrationExpirationDate: data.registrationExpirationDate,
+            registrationExpirationDate: registrationExpirationDate,
             labcorpRegistrationNumber: data.labcorpRegistrationNumber || "",
             status: data.status || "PENDING",
             createdBy: data.createdBy,
@@ -149,6 +164,23 @@ exports.donorRegistrationService = {
             throw new Error("Registration not found");
         if (role !== "ADMIN" && existing.userId !== updatedBy)
             throw new Error("Unauthorized to update this registration");
+        // Convert date strings to Date objects if provided
+        let donorDateOfBirth = undefined;
+        if (data.donorDateOfBirth) {
+            const dob = data.donorDateOfBirth instanceof Date ? data.donorDateOfBirth : new Date(data.donorDateOfBirth);
+            if (isNaN(dob.getTime()))
+                throw new Error("Invalid donorDateOfBirth");
+            donorDateOfBirth = dob;
+        }
+        let registrationExpirationDate = undefined;
+        if (data.registrationExpirationDate) {
+            const regExpDate = data.registrationExpirationDate instanceof Date
+                ? data.registrationExpirationDate
+                : new Date(data.registrationExpirationDate);
+            if (isNaN(regExpDate.getTime()))
+                throw new Error("Invalid registrationExpirationDate");
+            registrationExpirationDate = regExpDate;
+        }
         const encryptedData = {
             // required fields
             donorNameFirst: data.donorNameFirst ? (0, encryption_1.encrypt)(data.donorNameFirst) : existing.donorNameFirst,
@@ -158,12 +190,13 @@ exports.donorRegistrationService = {
                 ? (0, encryption_1.encrypt)(data.donorStateOfResidence)
                 : existing.donorStateOfResidence,
             // optional/nullable fields
+            donorDateOfBirth: donorDateOfBirth ?? existing.donorDateOfBirth,
             donorSSN: data.donorSSN ? (0, encryption_1.encrypt)(data.donorSSN) : existing.donorSSN,
             reasonForTest: data.reasonForTest ? (0, encryption_1.encrypt)(data.reasonForTest) : existing.reasonForTest,
             serviceId: data.serviceId ? (0, encryption_1.encryptDeterministic)(data.serviceId) : existing.serviceId,
             accountNo: data.accountNo ? (0, encryption_1.encryptDeterministic)(data.accountNo) : existing.accountNo,
             panelId: data.panelId ?? existing.panelId,
-            registrationExpirationDate: data.registrationExpirationDate ?? existing.registrationExpirationDate,
+            registrationExpirationDate: registrationExpirationDate ?? existing.registrationExpirationDate,
             labcorpRegistrationNumber: data.labcorpRegistrationNumber ?? existing.labcorpRegistrationNumber,
             updatedBy,
             updatedByIP: ip,

@@ -47,7 +47,6 @@ declare class AuthService {
         role: import("../generated/prisma").$Enums.Role;
         username: string;
         dateOfBirth: Date | null;
-        password: string;
         isActive: boolean;
         lastLogin: Date | null;
         profileImage: string | null;

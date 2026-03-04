@@ -2,6 +2,27 @@
 # Usage: docker-compose -f docker-compose.prod.yml up -d
 
 services:
+  api:
+    build: .
+    image: drugfreecompliance-api:latest
+    container_name: drugfreecompliance-api-prod
+    restart: always
+    ports:
+      - "${API_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - drugfreecompliance-network-prod
+    volumes:
+      - uploads_data_prod:/app/uploads
+
   postgres:
     image: postgres:16-alpine
     container_name: drugfreecompliance-postgres-prod
@@ -49,6 +70,8 @@ volumes:
   postgres_data_prod:
     driver: local
   pgadmin_data_prod:
+    driver: local
+  uploads_data_prod:
     driver: local
 
 networks:

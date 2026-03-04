@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.serviceController = void 0;
 const serviceService_1 = require("../services/serviceService");
+const uploadMiddleware_1 = require("../middlewares/uploadMiddleware");
 exports.serviceController = {
     // ✅ Create new service
     async create(req, res) {
@@ -17,8 +18,8 @@ exports.serviceController = {
             // Handle banner image: either from file upload or URL from body
             let bannerImage = null;
             if (req.file) {
-                // File uploaded via form-data
-                bannerImage = `/uploads/${req.file.filename}`;
+                // File uploaded via form-data - upload to Cloudinary or local
+                bannerImage = await (0, uploadMiddleware_1.uploadFile)(req.file);
             }
             else if (req.body.bannerImage) {
                 // Image URL provided in JSON body
@@ -100,8 +101,9 @@ exports.serviceController = {
             // Handle banner image: either from file upload or URL from body
             let bannerImageUpdate = {};
             if (req.file) {
-                // File uploaded via form-data
-                bannerImageUpdate = { bannerImage: `/uploads/${req.file.filename}` };
+                // File uploaded via form-data - upload to Cloudinary or local
+                const uploadedUrl = await (0, uploadMiddleware_1.uploadFile)(req.file);
+                bannerImageUpdate = { bannerImage: uploadedUrl };
             }
             else if (req.body.bannerImage !== undefined) {
                 // Image URL provided in JSON body (can be null to remove image)

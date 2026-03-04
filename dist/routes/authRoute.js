@@ -34,6 +34,8 @@ router.get("/users", authMiddleware_1.default.authenticate, authController_1.def
 router.post("/forgot-password", authController_1.default.forgotPassword);
 router.post("/verify-otp", authController_1.default.verifyOTP);
 router.post("/reset-password", authController_1.default.resetPassword);
+// ✅ Update profile for the currently authenticated user
+router.put("/update-profile", authMiddleware_1.default.authenticate, uploadMiddleware_1.upload.single("profileImage"), authController_1.default.updateProfile);
 router.put("/user/:id", authMiddleware_1.default.authenticate, uploadMiddleware_1.upload.single("profileImage"), authController_1.default.updateUser);
 // Route to logout (optional, can be implemented as needed)
 router.post("/auth/logout", authMiddleware_1.default.authenticate, authController_1.default.logout);

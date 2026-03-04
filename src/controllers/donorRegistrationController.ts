@@ -175,15 +175,7 @@ export const donorRegistrationController = {
                 donorReasonForTest,
             });
 
-            // Either return the result directly (if it already has success: true)
             res.json(result);
-
-            // OR if you want to be explicit:
-            // res.json({
-            //     success: true,
-            //     labcorpRegistrationNumber: result.labcorpRegistrationNumber
-            // });
-
         } catch (err: any) {
             console.error('Confirm direct error:', err);
             res.status(500).json({ success: false, message: err.message });

@@ -1,4 +1,26 @@
 services:
+  api:
+    build: .
+    container_name: drugfreecompliance-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      # Override only DB host for Docker; all other vars from .env
+      DATABASE_URL: postgresql://postgres:3421@postgres:5432/mybizhelperapi?schema=public
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - drugfreecompliance-network
+    volumes:
+      - uploads_data:/app/uploads
+
   postgres:
     image: postgres:16-alpine
     container_name: drugfreecompliance-postgres
@@ -56,6 +78,8 @@ volumes:
   postgres_data:
     driver: local
   pgadmin_data:
+    driver: local
+  uploads_data:
     driver: local
 
 networks:

@@ -56,7 +56,7 @@ npx prisma migrate dev
 
 ### 3. Environment Variables
 
-Create a `.env` file in the root directory with the following variables:
+Use a `.env` file in the root directory with the following variables (all keys/URLs are defined there):
 
 ```env
 # Database Configuration
@@ -136,6 +136,24 @@ npm start
 
 The server will start on `http://localhost:3000` (or the port specified in your `.env` file).
 
+### 7. Docker (optional)
+
+Run the API, PostgreSQL, PgAdmin, and Mailpit with Docker Compose. All keys and URLs are read from your `.env` file.
+
+1. Ensure your `.env` in the project root has every key/URL you need (see **Environment Variables** above).
+
+2. Build and start all services:
+   ```bash
+   docker compose up -d --build
+   ```
+
+3. The API runs at `http://localhost:3000`, Postgres on `5432`, PgAdmin on `http://localhost:5050`, Mailpit on `http://localhost:8025`. Migrations run automatically when the API container starts. For Docker, `DATABASE_URL` is overridden so the API connects to the `postgres` service; all other variables come from `.env`.
+
+4. Production-style stack (uses `.env` for all config):
+   ```bash
+   docker compose -f docker-compose.prod.yml up -d --build
+   ```
+
 ## Project Structure
 
 ```
@@ -206,7 +224,8 @@ npx prisma studio
 
 - `npm run dev` - Start development server with nodemon
 - `npm run build` - Build TypeScript to JavaScript
-- `npm start` - Start production server
+- `npm start` - Start production server (ts-node)
+- `npm run start:prod` - Run built app (node dist/index.js)
 - `npm run db:check` - Verify database connection
 - `npm run clean` - Remove dist directory
 

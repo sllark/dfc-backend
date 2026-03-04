@@ -42,6 +42,28 @@ export declare const paymentService: {
         }[];
         total: number;
     }>;
+    getAllWithoutPagination({ status, requestingUserId, role }: {
+        status?: string;
+        requestingUserId: number;
+        role: "ADMIN" | "USER";
+    }): Promise<{
+        data: {
+            userId: number;
+            createdAt: Date;
+            updatedAt: Date;
+            id: number;
+            status: string;
+            isDelete: boolean;
+            createdBy: number;
+            updatedBy: number | null;
+            donorRegistrationId: number;
+            amount: number;
+            currency: string;
+            paymentMethod: string;
+            transactionId: string;
+        }[];
+        total: number;
+    }>;
     getById(id: number, requestingUserId: number, role: "ADMIN" | "USER"): Promise<{
         userId: number;
         createdAt: Date;
