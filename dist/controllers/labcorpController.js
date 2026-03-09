@@ -89,12 +89,6 @@ exports.labcorpController = {
                 distance: distance || null,
                 phoneNumber: phoneNumber || null,
             };
-            // TODO: Here you would integrate with your order placement logic
-            // For now, we'll just return the location data
-            // You can extend this to:
-            // 1. Save the selected location to a database
-            // 2. Associate it with a donor registration
-            // 3. Use it in the order placement SOAP call
             res.json({
                 success: true,
                 message: 'Location selected successfully',

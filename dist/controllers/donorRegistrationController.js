@@ -149,13 +149,7 @@ exports.donorRegistrationController = {
                 registrationExpirationDate,
                 donorReasonForTest,
             });
-            // Either return the result directly (if it already has success: true)
             res.json(result);
-            // OR if you want to be explicit:
-            // res.json({
-            //     success: true,
-            //     labcorpRegistrationNumber: result.labcorpRegistrationNumber
-            // });
         }
         catch (err) {
             console.error('Confirm direct error:', err);

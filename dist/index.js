@@ -9,7 +9,7 @@ const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
 const authRoute_1 = __importDefault(require("./routes/authRoute"));
 const serviceRoute_1 = __importDefault(require("./routes/serviceRoute"));
-const donorRegistrationRoutes_1 = __importDefault(require("./routes/donorRegistrationRoutes")); // ✅ new import
+const donorRegistrationRoutes_1 = __importDefault(require("./routes/donorRegistrationRoutes"));
 const authMiddleware_1 = __importDefault(require("./middlewares/authMiddleware"));
 const paymentRoutes_1 = __importDefault(require("./routes/paymentRoutes"));
 const labcorpRoute_1 = __importDefault(require("./routes/labcorpRoute"));
@@ -37,7 +37,6 @@ if (process.env.ENC_IV && process.env.ENC_IV.length !== 32) {
 const app = (0, express_1.default)();
 // ===== Middlewares =====
 app.use((0, cors_1.default)({
-    // origin: ["http://localhost:3001", "http://localhost:3002"],
     origin: ["https://drugfreecomplience.vercel.app", "https://frontend.dfctest.com", "https://admin.dfctest.com", "https://dfctest.com", "http://localhost:4000", "http://localhost:3000", "http://localhost:3001"],
     credentials: true,
 }));
@@ -56,15 +55,12 @@ app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '../
 // ===== API Routes =====
 app.use('/api', authRoute_1.default);
 app.use('/api/services', serviceRoute_1.default);
-// ✅ Donor registration routes (requires auth)
 app.use('/api/donors', donorRegistrationRoutes_1.default);
 // Payment routes (authenticated users)
 app.use('/api/payments', authMiddleware_1.default.authenticate, paymentRoutes_1.default);
 // Labcorp routes
 app.use('/api/labcorp', labcorpRoute_1.default);
-// ✅ New GET endpoint to fetch completed session/payment info
 app.use("/api/stripe", stripeSession_1.default);
-// For other routes, use normal JSON parser
 app.use("/api/checkout", stripeCheckout_1.default);
 // ===== Health Check (must be before 404 handler) =====
 app.get('/', (req, res) => {

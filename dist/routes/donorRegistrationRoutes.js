@@ -18,7 +18,6 @@ router.put("/donor-registration/:id", authMiddleware_1.default.authenticate, don
 // SOFT DELETE a donor registration (ADMIN only)
 router.delete("/donor-registration/:id", authMiddleware_1.default.authenticate, donorRegistrationController_1.donorRegistrationController.softDelete);
 // CONFIRM a donor registration (ADMIN only)
-// In your routes file
 router.post('/donor-registration/confirm-direct', authMiddleware_1.default.authenticate, donorRegistrationController_1.donorRegistrationController.confirmDirect);
 // REJECT a donor registration (ADMIN only)
 router.post("/donor-registration/:id/reject", authMiddleware_1.default.authenticate, donorRegistrationController_1.donorRegistrationController.reject);
