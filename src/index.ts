@@ -40,7 +40,17 @@ const app = express();
 
 // ===== Middlewares =====
 app.use(cors({
-    origin: ["https://drugfreecomplience.vercel.app", "https://frontend.dfctest.com", "https://admin.dfctest.com", "https://dfctest.com","http://localhost:4000","http://localhost:3000","http://localhost:3001"],
+    origin: [
+        "https://drugfreecomplience.vercel.app",
+        "https://frontend.dfctest.com",
+        "https://admin.dfctest.com",
+        "https://dfctest.com",
+        'https://dfc-odir.vercel.app',        // frontend
+        'https://dfc-admin-panel.vercel.app',  // admin panel
+        "http://localhost:4000",
+        "http://localhost:3000",
+        "http://localhost:3001"
+    ],
     credentials: true,
 }));
 
