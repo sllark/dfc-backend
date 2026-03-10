@@ -9,6 +9,8 @@ import donorRegistrationRoutes from './routes/donorRegistrationRoutes';
 import AuthMiddleware from './middlewares/authMiddleware';
 import paymentRoutes from "./routes/paymentRoutes";
 import labcorpRoute from "./routes/labcorpRoute";
+import labcorpRestRoutes from "./routes/labcorpRestRoutes";
+import labcorpWebhookRoutes from "./routes/labcorpWebhookRoutes";
 import stripeCheckoutRouter from "./routes/stripeCheckout";
 import stripeWebhookRouter from "./routes/stripeWebhook";
 import stripeSessionRouter from "./routes/stripeSession";
@@ -16,7 +18,17 @@ import stripeSessionRouter from "./routes/stripeSession";
 dotenv.config();
 
 // ===== Validate Required Environment Variables =====
-const requiredEnvVars = ['JWT_SECRET', 'ENC_KEY', 'ENC_IV'];
+const requiredEnvVars = [
+    'JWT_SECRET',
+    'ENC_KEY',
+    'ENC_IV',
+    'OKTA_CLIENT_ID',
+    'OKTA_CLIENT_SECRET',
+    'OKTA_URL_PREFIX',
+    'LABCORP_SCHED_URL',
+    'LABCORP_PAYLOAD_PASSWORD',
+    'WEBHOOK_SECRET',
+];
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingEnvVars.length > 0) {
@@ -49,7 +61,8 @@ app.use(cors({
         'https://dfc-admin-panel.vercel.app',  // admin panel
         "http://localhost:4000",
         "http://localhost:3000",
-        "http://localhost:3001"
+        "http://localhost:3001",
+        "http://localhost:3002"
     ],
     credentials: true,
 }));
@@ -79,8 +92,14 @@ app.use('/api/donors', donorRegistrationRoutes);
 // Payment routes (authenticated users)
 app.use('/api/payments', AuthMiddleware.authenticate, paymentRoutes);
 
-// Labcorp routes
+// Labcorp SOAP routes (existing)
 app.use('/api/labcorp', labcorpRoute);
+
+// Labcorp REST routes (new)
+app.use('/api', labcorpRestRoutes);
+
+// Labcorp webhook callback route (REST subscription callbacks)
+app.use('/', labcorpWebhookRoutes);
 
 app.use("/api/stripe", stripeSessionRouter);
 app.use("/api/checkout", stripeCheckoutRouter);
