@@ -59,6 +59,7 @@ app.use(cors({
         "https://dfctest.com",
         'https://dfc-odir.vercel.app',        // frontend
         'https://dfc-admin-panel.vercel.app',  // admin panel
+        "https://test-4.slarklabs.com",
         "http://localhost:4000",
         "http://localhost:3000",
         "http://localhost:3001",
