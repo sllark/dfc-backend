@@ -52,19 +52,29 @@ const app = express();
 
 // ===== Middlewares =====
 app.use(cors({
-    origin: [
-        "https://drugfreecomplience.vercel.app",
-        "https://frontend.dfctest.com",
-        "https://admin.dfctest.com",
-        "https://dfctest.com",
-        'https://dfc-odir.vercel.app',        // frontend
-        'https://dfc-admin-panel.vercel.app',  // admin panel
-        "https://test-4.slarklabs.com",
-        "http://localhost:4000",
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:3002"
-    ],
+    origin: function(origin, callback) {
+        const allowedOrigins = [
+            "https://drugfreecomplience.vercel.app",
+            "https://frontend.dfctest.com",
+            "https://admin.dfctest.com",
+            "https://dfctest.com",
+            "https://dfc-odir.vercel.app",
+            "https://dfc-admin-panel.vercel.app",
+            "https://test-4.slarklabs.com",
+            "http://localhost:4000",
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:3002"
+        ];
+        // Allow all Vercel preview deployments and slarklabs subdomains
+        if (!origin || allowedOrigins.includes(origin) ||
+            origin.endsWith('.vercel.app') ||
+            origin.endsWith('.slarklabs.com')) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS HEADERS'));
+        }
+    },
     credentials: true,
 }));
 
