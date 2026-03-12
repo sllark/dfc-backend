@@ -281,6 +281,8 @@ export const donorRegistrationService = {
         testingAuthority: string;
         registrationExpirationDate: string;
         donorReasonForTest: string;
+        splitSpecimenRequested?: boolean;
+        labcorpRegistrationNumber?: string;
     }) {
         try {
             const registrationData: Record<string, any> = {
@@ -291,7 +293,12 @@ export const donorRegistrationService = {
                 donorSSN: data.donorSSN || "",
                 donorStateOfResidence: data.donorStateOfResidence,
                 panelId: data.panelId,
-                splitSpecimenRequested: 'false',
+                // Labcorp expects a boolean-like flag; default to true but allow admin payload to override
+                splitSpecimenRequested: String(
+                    typeof data.splitSpecimenRequested === "boolean"
+                        ? data.splitSpecimenRequested
+                        : true
+                ),
                 accountNumber: data.accountNumber,
                 testingAuthority: data.testingAuthority || "",
                 registrationExpirationDate: new Date(data.registrationExpirationDate).toISOString().split('T')[0] + 'T00:00:00',

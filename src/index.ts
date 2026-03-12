@@ -82,8 +82,8 @@ app.use(cors({
 // This MUST be registered before express.json()/urlencoded() or signature verification will fail.
 app.use("/api/stripe/webhook", stripeWebhookRouter);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ===== Ensure JSON Content-Type for all responses =====
 app.use((req: Request, res: Response, next: NextFunction) => {
