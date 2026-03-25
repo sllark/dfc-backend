@@ -56,7 +56,16 @@ router.post("/", async (req, res) => {
         
         const validatedServices = selectedServices.map((svc: any, index: number) => {
             // Try multiple possible field names for the price
-            const serviceFee = Number(svc.serviceFee ?? svc.price ?? svc.amount ?? svc.fee ?? 0);
+            const serviceFee = Number(
+                svc.serviceFee ??
+                svc.discountedServiceFee ??
+                svc.originalServiceFee ??
+                svc.actualServiceFee ??
+                svc.price ??
+                svc.amount ??
+                svc.fee ??
+                0
+            );
             
             console.log(`🔍 Validating service ${index}:`, {
                 original: svc,
