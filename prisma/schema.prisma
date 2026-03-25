@@ -45,9 +45,12 @@ model Service {
   id          Int      @id @default(autoincrement())
   name        String
   slug        String   @unique
+  description String?
   accountNo   String?  @db.VarChar
   panelID     String?  @db.VarChar
   serviceFee  Int?
+  discountedServiceFee Int?
+  originalServiceFee   Int?
   bannerImage String?
   createdBy   Int
   updatedBy   Int?
