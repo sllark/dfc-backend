@@ -169,6 +169,8 @@ export declare const donorRegistrationService: {
         testingAuthority: string;
         registrationExpirationDate: string;
         donorReasonForTest: string;
+        splitSpecimenRequested?: boolean;
+        labcorpRegistrationNumber?: string;
     }): Promise<{
         success: boolean;
         labcorpRegistrationNumber: any;

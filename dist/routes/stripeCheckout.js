@@ -49,7 +49,14 @@ router.post("/", async (req, res) => {
         console.log("📦 Received selectedServices:", JSON.stringify(selectedServices, null, 2));
         const validatedServices = selectedServices.map((svc, index) => {
             // Try multiple possible field names for the price
-            const serviceFee = Number(svc.serviceFee ?? svc.price ?? svc.amount ?? svc.fee ?? 0);
+            const serviceFee = Number(svc.serviceFee ??
+                svc.discountedServiceFee ??
+                svc.originalServiceFee ??
+                svc.actualServiceFee ??
+                svc.price ??
+                svc.amount ??
+                svc.fee ??
+                0);
             console.log(`🔍 Validating service ${index}:`, {
                 original: svc,
                 serviceFee: serviceFee,

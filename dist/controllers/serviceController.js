@@ -3,11 +3,78 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.serviceController = void 0;
 const serviceService_1 = require("../services/serviceService");
 const uploadMiddleware_1 = require("../middlewares/uploadMiddleware");
+function parseOptionalStringInput(value) {
+    if (value === undefined)
+        return undefined;
+    if (value === null)
+        return null;
+    if (typeof value !== "string")
+        return String(value);
+    const trimmed = value.trim();
+    if (!trimmed)
+        return null;
+    return trimmed;
+}
+// Parses admin-panel fee inputs into `number | null` where:
+// - `undefined` => not provided
+// - `null` / `""` / `0` / invalid => quote-only => null
+function parseOptionalFeeInput(value) {
+    if (value === undefined)
+        return undefined;
+    if (value === null)
+        return null;
+    if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (!trimmed || trimmed.toLowerCase() === "null")
+            return null;
+        const n = Number(trimmed);
+        if (!Number.isFinite(n) || n <= 0)
+            return null;
+        return n;
+    }
+    const n = Number(value);
+    if (!Number.isFinite(n) || n <= 0)
+        return null;
+    return n;
+}
+function normalizeFeeForUi(raw) {
+    if (raw === undefined || raw === null)
+        return null;
+    if (raw === 0)
+        return null;
+    return raw;
+}
+function mapServiceForUi(service) {
+    // UI expects pricing + subtitle rendering.
+    // Pricing rule:
+    // - quote-only => ALL pricing fields are null
+    // - otherwise:
+    //   - `serviceFee` is always the "order now" price (derived from the first available of serviceFee/discounted/original)
+    //   - `discountedServiceFee` / `originalServiceFee` are included only when provided separately
+    const serviceFeeRaw = normalizeFeeForUi(service.serviceFee);
+    const discountedRaw = normalizeFeeForUi(service.discountedServiceFee);
+    const originalRaw = normalizeFeeForUi(service.originalServiceFee);
+    const isQuoteOnly = serviceFeeRaw === null && discountedRaw === null && originalRaw === null;
+    const serviceFeeForUi = isQuoteOnly ? null : (serviceFeeRaw ?? discountedRaw ?? originalRaw ?? null);
+    const discountedServiceFeeForUi = isQuoteOnly ? null : discountedRaw;
+    const originalServiceFeeForUi = isQuoteOnly ? null : originalRaw;
+    const description = service.description ?? service.slug;
+    return {
+        ...service,
+        // Pricing used by the card UI
+        serviceFee: serviceFeeForUi,
+        discountedServiceFee: discountedServiceFeeForUi,
+        originalServiceFee: originalServiceFeeForUi,
+        // Subtitle used by the card UI (falls back to slug if absent on the UI side)
+        description,
+        serviceDescription: description,
+    };
+}
 exports.serviceController = {
     // ✅ Create new service
     async create(req, res) {
         try {
-            const { name, slug, accountNo, panelID, createdBy, status, serviceFee } = req.body;
+            const { name, slug, accountNo, panelID, createdBy, status, serviceFee, discountedServiceFee, originalServiceFee, actualServiceFee, description, serviceDescription, } = req.body;
             // Validate required fields
             if (!name || !slug || !createdBy) {
                 return res.status(400).json({
@@ -25,18 +92,34 @@ exports.serviceController = {
                 // Image URL provided in JSON body
                 bannerImage = req.body.bannerImage;
             }
+            const parsedDescription = parseOptionalStringInput(description ?? serviceDescription);
+            const parsedServiceFee = parseOptionalFeeInput(serviceFee);
+            const parsedDiscountedServiceFee = parseOptionalFeeInput(discountedServiceFee);
+            const parsedOriginalServiceFee = parseOptionalFeeInput(originalServiceFee ?? actualServiceFee);
+            // Keep legacy compatibility: `serviceFee` is what older flows use for "Order Now"/checkout.
+            // If `serviceFee` is not provided but discounted/original are, derive `serviceFee` from them.
+            const serviceFeeToStore = parsedServiceFee !== undefined
+                ? parsedServiceFee
+                : parsedDiscountedServiceFee !== undefined
+                    ? parsedDiscountedServiceFee
+                    : parsedOriginalServiceFee !== undefined
+                        ? parsedOriginalServiceFee
+                        : null;
             const data = {
                 name,
                 slug,
                 accountNo: accountNo ? accountNo : null,
                 panelID: panelID ? panelID : null, // ✅ added encryption
-                serviceFee: serviceFee !== undefined ? Number(serviceFee) : null, // ✅ added serviceFee
+                serviceFee: serviceFeeToStore,
+                discountedServiceFee: parsedDiscountedServiceFee === undefined ? null : parsedDiscountedServiceFee,
+                originalServiceFee: parsedOriginalServiceFee === undefined ? null : parsedOriginalServiceFee,
+                description: parsedDescription === undefined ? null : parsedDescription,
                 status: status !== undefined ? status === "true" || status === true : true,
                 bannerImage,
                 createdBy: Number(createdBy),
             };
             const service = await serviceService_1.serviceService.create(data);
-            res.status(201).json({ success: true, data: service });
+            res.status(201).json({ success: true, data: mapServiceForUi(service) });
         }
         catch (error) {
             res.status(500).json({ success: false, message: error.message });
@@ -63,9 +146,10 @@ exports.serviceController = {
                 sortBy,
                 sortOrder,
             });
+            const mappedData = data.map(mapServiceForUi);
             res.json({
                 success: true,
-                data,
+                data: mappedData,
                 meta: {
                     total,
                     current_page: page,
@@ -84,7 +168,7 @@ exports.serviceController = {
             const service = await serviceService_1.serviceService.getById(id);
             if (!service)
                 return res.status(404).json({ success: false, message: "Service not found" });
-            res.json({ success: true, data: service });
+            res.json({ success: true, data: mapServiceForUi(service) });
         }
         catch (error) {
             res.status(500).json({ success: false, message: error.message });
@@ -97,7 +181,7 @@ exports.serviceController = {
             if (isNaN(id)) {
                 return res.status(400).json({ success: false, message: "Invalid service ID" });
             }
-            const { name, slug, accountNo, panelID, updatedBy, status, serviceFee } = req.body;
+            const { name, slug, accountNo, panelID, updatedBy, status, serviceFee, discountedServiceFee, originalServiceFee, actualServiceFee, description, serviceDescription, } = req.body;
             // Handle banner image: either from file upload or URL from body
             let bannerImageUpdate = {};
             if (req.file) {
@@ -109,18 +193,42 @@ exports.serviceController = {
                 // Image URL provided in JSON body (can be null to remove image)
                 bannerImageUpdate = { bannerImage: req.body.bannerImage || null };
             }
+            const hasServiceFee = Object.prototype.hasOwnProperty.call(req.body, "serviceFee");
+            const hasDiscountedServiceFee = Object.prototype.hasOwnProperty.call(req.body, "discountedServiceFee");
+            const hasOriginalServiceFee = Object.prototype.hasOwnProperty.call(req.body, "originalServiceFee") ||
+                Object.prototype.hasOwnProperty.call(req.body, "actualServiceFee");
+            const parsedDescription = parseOptionalStringInput(description ?? serviceDescription);
+            const hasDescription = Object.prototype.hasOwnProperty.call(req.body, "description") ||
+                Object.prototype.hasOwnProperty.call(req.body, "serviceDescription");
+            const parsedServiceFee = parseOptionalFeeInput(serviceFee);
+            const parsedDiscountedServiceFee = parseOptionalFeeInput(discountedServiceFee);
+            const parsedOriginalServiceFee = parseOptionalFeeInput(originalServiceFee ?? actualServiceFee);
+            const shouldUpdatePricing = hasServiceFee || hasDiscountedServiceFee || hasOriginalServiceFee;
+            const serviceFeeToUpdate = parsedServiceFee !== undefined
+                ? parsedServiceFee
+                : parsedDiscountedServiceFee !== undefined
+                    ? parsedDiscountedServiceFee
+                    : parsedOriginalServiceFee !== undefined
+                        ? parsedOriginalServiceFee
+                        : null;
+            const pricingUpdate = {
+                ...(shouldUpdatePricing && { serviceFee: serviceFeeToUpdate }),
+                ...(hasDiscountedServiceFee && { discountedServiceFee: parsedDiscountedServiceFee === undefined ? null : parsedDiscountedServiceFee }),
+                ...(hasOriginalServiceFee && { originalServiceFee: parsedOriginalServiceFee === undefined ? null : parsedOriginalServiceFee }),
+            };
             const data = {
                 ...(name !== undefined && { name }),
                 ...(slug !== undefined && { slug }),
                 ...(accountNo !== undefined && { accountNo: accountNo }),
                 ...(panelID !== undefined && { panelID: panelID }), // ✅ added encryption
-                ...(serviceFee !== undefined && { serviceFee: Number(serviceFee) }), // ✅ added serviceFee
                 ...(status !== undefined && { status: status === "true" || status === true }),
                 ...(updatedBy !== undefined && { updatedBy: Number(updatedBy) }),
+                ...(hasDescription && { description: parsedDescription === undefined ? null : parsedDescription }),
+                ...pricingUpdate,
                 ...bannerImageUpdate,
             };
             const updated = await serviceService_1.serviceService.update(id, data);
-            res.json({ success: true, data: updated });
+            res.json({ success: true, data: mapServiceForUi(updated) });
         }
         catch (error) {
             res.status(500).json({ success: false, message: error.message });
@@ -138,7 +246,7 @@ exports.serviceController = {
                 return res.status(400).json({ success: false, message: "updatedBy is required" });
             }
             const deleted = await serviceService_1.serviceService.softDelete(id, Number(updatedBy));
-            res.json({ success: true, data: deleted });
+            res.json({ success: true, data: mapServiceForUi(deleted) });
         }
         catch (error) {
             res.status(500).json({ success: false, message: error.message });

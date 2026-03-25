@@ -44,6 +44,7 @@ exports.serviceService = {
                 OR: [
                     { name: { contains: search, mode: "insensitive" } },
                     { slug: { contains: search, mode: "insensitive" } },
+                    { description: { contains: search, mode: "insensitive" } },
                     { accountNo: { contains: (0, encryption_1.encryptDeterministic)(search), mode: "insensitive" } },
                     { panelID: { contains: (0, encryption_1.encryptDeterministic)(search), mode: "insensitive" } },
                 ],
@@ -53,11 +54,33 @@ exports.serviceService = {
             andConditions.push({ status: true });
         else if (status === "false")
             andConditions.push({ status: false });
-        if (minFee !== null && minFee !== undefined) {
-            andConditions.push({ serviceFee: { gte: minFee } });
+        // Match if any stored price column falls within range (quote-only rows have all null and won't match numeric filters).
+        if (minFee !== null && minFee !== undefined && maxFee !== null && maxFee !== undefined) {
+            andConditions.push({
+                OR: [
+                    { serviceFee: { gte: minFee, lte: maxFee } },
+                    { discountedServiceFee: { gte: minFee, lte: maxFee } },
+                    { originalServiceFee: { gte: minFee, lte: maxFee } },
+                ],
+            });
         }
-        if (maxFee !== null && maxFee !== undefined) {
-            andConditions.push({ serviceFee: { lte: maxFee } });
+        else if (minFee !== null && minFee !== undefined) {
+            andConditions.push({
+                OR: [
+                    { serviceFee: { gte: minFee } },
+                    { discountedServiceFee: { gte: minFee } },
+                    { originalServiceFee: { gte: minFee } },
+                ],
+            });
+        }
+        else if (maxFee !== null && maxFee !== undefined) {
+            andConditions.push({
+                OR: [
+                    { serviceFee: { lte: maxFee } },
+                    { discountedServiceFee: { lte: maxFee } },
+                    { originalServiceFee: { lte: maxFee } },
+                ],
+            });
         }
         const where = {
             isDelete: false,
