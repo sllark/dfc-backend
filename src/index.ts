@@ -14,6 +14,8 @@ import labcorpWebhookRoutes from "./routes/labcorpWebhookRoutes";
 import stripeCheckoutRouter from "./routes/stripeCheckout";
 import stripeWebhookRouter from "./routes/stripeWebhook";
 import stripeSessionRouter from "./routes/stripeSession";
+import veriportSnsRoutes from "./routes/veriportSnsRoutes";
+import veriportRoutes from "./routes/veriportRoutes";
 
 dotenv.config();
 
@@ -82,6 +84,10 @@ app.use(cors({
 // This MUST be registered before express.json()/urlencoded() or signature verification will fail.
 app.use("/api/stripe/webhook", stripeWebhookRouter);
 
+// Veriport/AWS SNS receiver (SNS often uses text/plain)
+// Keep this before express.json() so route-level body parsing works reliably.
+app.use("/", veriportSnsRoutes);
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -108,6 +114,7 @@ app.use('/api/labcorp', labcorpRoute);
 
 // Labcorp REST routes (new)
 app.use('/api', labcorpRestRoutes);
+app.use('/api', veriportRoutes);
 
 // Labcorp webhook callback route (REST subscription callbacks)
 app.use('/', labcorpWebhookRoutes);

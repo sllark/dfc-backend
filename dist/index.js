@@ -18,6 +18,8 @@ const labcorpWebhookRoutes_1 = __importDefault(require("./routes/labcorpWebhookR
 const stripeCheckout_1 = __importDefault(require("./routes/stripeCheckout"));
 const stripeWebhook_1 = __importDefault(require("./routes/stripeWebhook"));
 const stripeSession_1 = __importDefault(require("./routes/stripeSession"));
+const veriportSnsRoutes_1 = __importDefault(require("./routes/veriportSnsRoutes"));
+const veriportRoutes_1 = __importDefault(require("./routes/veriportRoutes"));
 dotenv_1.default.config();
 // ===== Validate Required Environment Variables =====
 const requiredEnvVars = [
@@ -78,6 +80,9 @@ app.use((0, cors_1.default)({
 // ⚠️ Stripe webhooks require the raw request body.
 // This MUST be registered before express.json()/urlencoded() or signature verification will fail.
 app.use("/api/stripe/webhook", stripeWebhook_1.default);
+// Veriport/AWS SNS receiver (SNS often uses text/plain)
+// Keep this before express.json() so route-level body parsing works reliably.
+app.use("/", veriportSnsRoutes_1.default);
 app.use(express_1.default.json({ limit: '10mb' }));
 app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
 // ===== Ensure JSON Content-Type for all responses =====
@@ -97,6 +102,7 @@ app.use('/api/payments', authMiddleware_1.default.authenticate, paymentRoutes_1.
 app.use('/api/labcorp', labcorpRoute_1.default);
 // Labcorp REST routes (new)
 app.use('/api', labcorpRestRoutes_1.default);
+app.use('/api', veriportRoutes_1.default);
 // Labcorp webhook callback route (REST subscription callbacks)
 app.use('/', labcorpWebhookRoutes_1.default);
 app.use("/api/stripe", stripeSession_1.default);
