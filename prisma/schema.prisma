@@ -138,3 +138,30 @@ enum RegistrationStatus {
   REJECTED
   RESUBMITTED
 }
+
+model VeriportSnsEvent {
+  id            Int      @id @default(autoincrement())
+  snsMessageId  String?  @unique
+  snsType       String
+  topicArn      String?
+  subject       String?
+  rawBody       String
+  receivedAt    DateTime @default(now())
+}
+
+model VeriportMroReport {
+  id                   Int      @id @default(autoincrement())
+  veriportReportId     BigInt
+  reportRevisionNumber String?
+  reportUpdate         Boolean?
+
+  // Source / tracking
+  snsMessageId  String?
+  downloadUrl   String?
+  rawXml        String
+  parsedJson    String?
+  receivedAt    DateTime @default(now())
+
+  @@index([veriportReportId])
+  @@unique([veriportReportId, reportRevisionNumber])
+}
