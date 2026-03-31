@@ -84,6 +84,10 @@ export const donorRegistrationService = {
             serviceId: data.serviceId ? encryptDeterministic(data.serviceId) : undefined,
             accountNo: data.accountNo ? encryptDeterministic(data.accountNo) : undefined,
             panelId: data.panelId,
+            panelRefId: (data as any).panelRefId ?? undefined,
+            panelTestCodeSnapshot: (data as any).panelTestCodeSnapshot ?? undefined,
+            accountNoSnapshot: (data as any).accountNoSnapshot ? encryptDeterministic((data as any).accountNoSnapshot) : undefined,
+            priceCentsSnapshot: (data as any).priceCentsSnapshot ?? undefined,
             registrationExpirationDate: registrationExpirationDate,
             labcorpRegistrationNumber: data.labcorpRegistrationNumber || "",
             status: data.status || "PENDING",
@@ -158,6 +162,7 @@ export const donorRegistrationService = {
             reasonForTest: d.reasonForTest ? decrypt(d.reasonForTest) : null,
             serviceId: d.serviceId ? decryptDeterministic(d.serviceId) : null,
             accountNo: d.accountNo ? decryptDeterministic(d.accountNo) : null,
+            accountNoSnapshot: d.accountNoSnapshot ? decryptDeterministic(d.accountNoSnapshot) : null,
         }));
 
         return { data: decryptedDonors, total };
@@ -180,6 +185,7 @@ export const donorRegistrationService = {
             reasonForTest: donor.reasonForTest ? decrypt(donor.reasonForTest) : null,
             serviceId: donor.serviceId ? decryptDeterministic(donor.serviceId) : null,
             accountNo: donor.accountNo ? decryptDeterministic(donor.accountNo) : null,
+            accountNoSnapshot: donor.accountNoSnapshot ? decryptDeterministic(donor.accountNoSnapshot) : null,
         };
     },
 

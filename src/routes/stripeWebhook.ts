@@ -3,6 +3,8 @@ import Stripe from "stripe";
 import { donorRegistrationService } from "../services/donorRegistrationService";
 import { paymentService } from "../services/paymentService";
 import { getClientIp } from "../utils/ipUtils";
+import { panelMatrixService } from "../services/panelMatrixService";
+import { decryptDeterministic } from "../utils/encryption";
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {});
@@ -105,13 +107,43 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
             }
 
             // panelId is required - check both panelID and panelId
-            const panelId = donorInfo.panelID || donorInfo.panelId;
-            console.log("   Checking panelId/panelID:", panelId ? `✅ Present (${panelId})` : "❌ Missing");
+            const legacyPanelValue = donorInfo.panelID || donorInfo.panelId;
+            const panelRefIdRaw = donorInfo.panelRefId ?? donorInfo.panelRefID ?? null;
+            const panelRefId =
+                panelRefIdRaw !== null && panelRefIdRaw !== undefined && String(panelRefIdRaw).trim() !== ""
+                    ? Number(panelRefIdRaw)
+                    : Number.isFinite(Number(legacyPanelValue)) && String(legacyPanelValue).trim().length <= 3
+                        ? Number(legacyPanelValue)
+                        : null;
+
+            const panelTestCode =
+                legacyPanelValue && typeof legacyPanelValue === "string" && legacyPanelValue.trim().length >= 5
+                    ? legacyPanelValue.trim()
+                    : typeof legacyPanelValue === "number"
+                        ? String(legacyPanelValue)
+                        : null;
+
+            console.log(
+                "   Checking panel selection:",
+                panelRefId ? `✅ panelRefId=${panelRefId}` : panelTestCode ? `✅ panelTestCode=${panelTestCode}` : "❌ Missing"
+            );
             
-            if (!panelId) {
-                throw new Error("Missing panelId/panelID in donorInfo metadata");
+            if (!panelRefId && !panelTestCode) {
+                throw new Error("Missing panel selection in donorInfo metadata (panelRefId or panelID/panelId test code required)");
             }
             console.log("   ✅ All required fields validated");
+
+            console.log("\n🧭 STEP 2.5: Resolving Panel routing data from database...");
+            const panel = await panelMatrixService.findPanelForOrder({
+                panelRefId: panelRefId ?? undefined,
+                panelTestCode: panelTestCode ?? undefined,
+            });
+            if (!panel) {
+                throw new Error(`Invalid panel selection. panelRefId=${panelRefId ?? "null"}, panelTestCode=${panelTestCode ?? "null"}`);
+            }
+
+            const resolvedAccountNo = decryptDeterministic(panel.accountNo);
+            const resolvedPanelTestCode = panel.panelTestCode;
 
             // Prepare donor registration data
             const donorData = {
@@ -127,8 +159,12 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
                 donorStateOfResidence: donorInfo.donorStateOfResidence,
                 reasonForTest: donorInfo.reasonForTest,
                 serviceId: services[0]?._id || services[0]?.id || "",
-                accountNo: donorInfo.accountNo,
-                panelId: panelId,
+                accountNo: donorInfo.accountNo ?? resolvedAccountNo,
+                panelId: resolvedPanelTestCode,
+                panelRefId: panel.id,
+                panelTestCodeSnapshot: resolvedPanelTestCode,
+                accountNoSnapshot: resolvedAccountNo,
+                priceCentsSnapshot: panel.priceCents,
                 registrationExpirationDate: donorInfo.registrationExpirationDate
                     ? new Date(donorInfo.registrationExpirationDate)
                     : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // Default: 1 year from now

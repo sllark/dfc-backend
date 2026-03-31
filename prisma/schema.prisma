@@ -92,6 +92,10 @@ model DonorRegistration {
   serviceId                  String?
   accountNo                  String?
   panelId                    String
+  panelRefId                 Int?
+  panelTestCodeSnapshot      String?
+  accountNoSnapshot          String?
+  priceCentsSnapshot         Int?
   reasonForTest              String?
   testingAuthority           String?
   registrationExpirationDate DateTime
@@ -111,6 +115,7 @@ model DonorRegistration {
   // Relations
   user     User      @relation(fields: [userId], references: [id])
   payments Payment[]
+  panel    Panel?    @relation(fields: [panelRefId], references: [id])
 }
 
 model Payment {
@@ -164,4 +169,54 @@ model VeriportMroReport {
 
   @@index([veriportReportId])
   @@unique([veriportReportId, reportRevisionNumber])
+}
+
+model Panel {
+  id            Int      @id @default(autoincrement())
+  name          String
+  slug          String   @unique
+  displayOrder  Int      @default(0)
+  accountNo     String
+  panelTestCode String
+  priceCents    Int
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tests         PanelTestItem[]
+  registrations DonorRegistration[]
+
+  @@index([slug])
+  @@index([panelTestCode])
+}
+
+model TestItem {
+  id           Int      @id @default(autoincrement())
+  name         String
+  slug         String   @unique
+  category     String?  // e.g. DRUG, SVT
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  panels       PanelTestItem[]
+
+  @@index([slug])
+}
+
+model PanelTestItem {
+  id         Int      @id @default(autoincrement())
+  panelId    Int
+  testItemId Int
+  included   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  panel      Panel    @relation(fields: [panelId], references: [id])
+  testItem   TestItem @relation(fields: [testItemId], references: [id])
+
+  @@unique([panelId, testItemId])
+  @@index([panelId])
+  @@index([testItemId])
 }

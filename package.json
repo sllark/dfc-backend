@@ -12,7 +12,8 @@
     "start": "ts-node ./src/index.ts",
     "start:prod": "node dist/index.js",
     "db:check": "node -e \"import('pg').then(pg => {const {Client}=pg; const c=new Client({user:'postgres',password:'3421',host:'localhost',port:5432,database:'mybizhelperapi'});c.connect().then(()=>{console.log('✅ DB Connected');return c.end();}).catch(e=>{console.error('❌',e.message);});})\"",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "seed:panel-matrix": "ts-node ./scripts/seed-panel-matrix.ts"
   },
   "author": "SD Coder",
   "license": "ISC",

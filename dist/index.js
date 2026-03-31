@@ -20,6 +20,7 @@ const stripeWebhook_1 = __importDefault(require("./routes/stripeWebhook"));
 const stripeSession_1 = __importDefault(require("./routes/stripeSession"));
 const veriportSnsRoutes_1 = __importDefault(require("./routes/veriportSnsRoutes"));
 const veriportRoutes_1 = __importDefault(require("./routes/veriportRoutes"));
+const panelMatrixRoutes_1 = __importDefault(require("./routes/panelMatrixRoutes"));
 dotenv_1.default.config();
 // ===== Validate Required Environment Variables =====
 const requiredEnvVars = [
@@ -95,6 +96,7 @@ app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '../
 // ===== API Routes =====
 app.use('/api', authRoute_1.default);
 app.use('/api/services', serviceRoute_1.default);
+app.use('/api', panelMatrixRoutes_1.default);
 app.use('/api/donors', donorRegistrationRoutes_1.default);
 // Payment routes (authenticated users)
 app.use('/api/payments', authMiddleware_1.default.authenticate, paymentRoutes_1.default);

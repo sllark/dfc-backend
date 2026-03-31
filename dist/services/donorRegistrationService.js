@@ -69,6 +69,10 @@ exports.donorRegistrationService = {
             serviceId: data.serviceId ? (0, encryption_1.encryptDeterministic)(data.serviceId) : undefined,
             accountNo: data.accountNo ? (0, encryption_1.encryptDeterministic)(data.accountNo) : undefined,
             panelId: data.panelId,
+            panelRefId: data.panelRefId ?? undefined,
+            panelTestCodeSnapshot: data.panelTestCodeSnapshot ?? undefined,
+            accountNoSnapshot: data.accountNoSnapshot ? (0, encryption_1.encryptDeterministic)(data.accountNoSnapshot) : undefined,
+            priceCentsSnapshot: data.priceCentsSnapshot ?? undefined,
             registrationExpirationDate: registrationExpirationDate,
             labcorpRegistrationNumber: data.labcorpRegistrationNumber || "",
             status: data.status || "PENDING",
@@ -135,6 +139,7 @@ exports.donorRegistrationService = {
             reasonForTest: d.reasonForTest ? (0, encryption_1.decrypt)(d.reasonForTest) : null,
             serviceId: d.serviceId ? (0, encryption_1.decryptDeterministic)(d.serviceId) : null,
             accountNo: d.accountNo ? (0, encryption_1.decryptDeterministic)(d.accountNo) : null,
+            accountNoSnapshot: d.accountNoSnapshot ? (0, encryption_1.decryptDeterministic)(d.accountNoSnapshot) : null,
         }));
         return { data: decryptedDonors, total };
     },
@@ -155,6 +160,7 @@ exports.donorRegistrationService = {
             reasonForTest: donor.reasonForTest ? (0, encryption_1.decrypt)(donor.reasonForTest) : null,
             serviceId: donor.serviceId ? (0, encryption_1.decryptDeterministic)(donor.serviceId) : null,
             accountNo: donor.accountNo ? (0, encryption_1.decryptDeterministic)(donor.accountNo) : null,
+            accountNoSnapshot: donor.accountNoSnapshot ? (0, encryption_1.decryptDeterministic)(donor.accountNoSnapshot) : null,
         };
     },
     // ================= UPDATE =================

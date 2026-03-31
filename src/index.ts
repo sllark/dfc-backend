@@ -16,6 +16,7 @@ import stripeWebhookRouter from "./routes/stripeWebhook";
 import stripeSessionRouter from "./routes/stripeSession";
 import veriportSnsRoutes from "./routes/veriportSnsRoutes";
 import veriportRoutes from "./routes/veriportRoutes";
+import panelMatrixRoutes from "./routes/panelMatrixRoutes";
 
 dotenv.config();
 
@@ -103,6 +104,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // ===== API Routes =====
 app.use('/api', AuthRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api', panelMatrixRoutes);
 
 app.use('/api/donors', donorRegistrationRoutes);
 

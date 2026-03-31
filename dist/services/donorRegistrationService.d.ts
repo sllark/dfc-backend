@@ -28,6 +28,9 @@ export declare const donorRegistrationService: {
         donorSSN: string | null;
         serviceId: string | null;
         panelId: string;
+        panelTestCodeSnapshot: string | null;
+        accountNoSnapshot: string | null;
+        priceCentsSnapshot: number | null;
         reasonForTest: string | null;
         testingAuthority: string | null;
         registrationExpirationDate: Date;
@@ -36,6 +39,7 @@ export declare const donorRegistrationService: {
         rejectReason: string | null;
         createdByIP: string;
         updatedByIP: string | null;
+        panelRefId: number | null;
     }>;
     getAll({ page, perPage, search, status, currentUserId, role }: GetAllParams): Promise<{
         data: {
@@ -48,6 +52,7 @@ export declare const donorRegistrationService: {
             reasonForTest: string | null;
             serviceId: string | null;
             accountNo: string | null;
+            accountNoSnapshot: string | null;
             userId: number;
             isActive: boolean;
             createdAt: Date;
@@ -60,6 +65,8 @@ export declare const donorRegistrationService: {
             donorSex: string | null;
             donorDateOfBirth: Date | null;
             panelId: string;
+            panelTestCodeSnapshot: string | null;
+            priceCentsSnapshot: number | null;
             testingAuthority: string | null;
             registrationExpirationDate: Date;
             splitSpecimenRequested: boolean;
@@ -67,6 +74,7 @@ export declare const donorRegistrationService: {
             rejectReason: string | null;
             createdByIP: string;
             updatedByIP: string | null;
+            panelRefId: number | null;
         }[];
         total: number;
     }>;
@@ -79,6 +87,7 @@ export declare const donorRegistrationService: {
         reasonForTest: string | null;
         serviceId: string | null;
         accountNo: string | null;
+        accountNoSnapshot: string | null;
         userId: number;
         isActive: boolean;
         createdAt: Date;
@@ -91,6 +100,8 @@ export declare const donorRegistrationService: {
         donorSex: string | null;
         donorDateOfBirth: Date | null;
         panelId: string;
+        panelTestCodeSnapshot: string | null;
+        priceCentsSnapshot: number | null;
         testingAuthority: string | null;
         registrationExpirationDate: Date;
         splitSpecimenRequested: boolean;
@@ -98,6 +109,7 @@ export declare const donorRegistrationService: {
         rejectReason: string | null;
         createdByIP: string;
         updatedByIP: string | null;
+        panelRefId: number | null;
     } | null>;
     update(id: number, data: Prisma.DonorRegistrationUncheckedUpdateInput, ip: string, updatedBy: number, role?: string): Promise<{
         userId: number;
@@ -119,6 +131,9 @@ export declare const donorRegistrationService: {
         donorSSN: string | null;
         serviceId: string | null;
         panelId: string;
+        panelTestCodeSnapshot: string | null;
+        accountNoSnapshot: string | null;
+        priceCentsSnapshot: number | null;
         reasonForTest: string | null;
         testingAuthority: string | null;
         registrationExpirationDate: Date;
@@ -127,6 +142,7 @@ export declare const donorRegistrationService: {
         rejectReason: string | null;
         createdByIP: string;
         updatedByIP: string | null;
+        panelRefId: number | null;
     }>;
     softDelete(id: number, updatedBy: number, ip: string, role?: "ADMIN" | "USER" | "SUPERVISOR" | "MODERATOR"): Promise<{
         userId: number;
@@ -148,6 +164,9 @@ export declare const donorRegistrationService: {
         donorSSN: string | null;
         serviceId: string | null;
         panelId: string;
+        panelTestCodeSnapshot: string | null;
+        accountNoSnapshot: string | null;
+        priceCentsSnapshot: number | null;
         reasonForTest: string | null;
         testingAuthority: string | null;
         registrationExpirationDate: Date;
@@ -156,6 +175,7 @@ export declare const donorRegistrationService: {
         rejectReason: string | null;
         createdByIP: string;
         updatedByIP: string | null;
+        panelRefId: number | null;
     }>;
     confirmDirect(data: {
         donorNameFirst: string;
@@ -196,6 +216,9 @@ export declare const donorRegistrationService: {
         donorSSN: string | null;
         serviceId: string | null;
         panelId: string;
+        panelTestCodeSnapshot: string | null;
+        accountNoSnapshot: string | null;
+        priceCentsSnapshot: number | null;
         reasonForTest: string | null;
         testingAuthority: string | null;
         registrationExpirationDate: Date;
@@ -204,6 +227,7 @@ export declare const donorRegistrationService: {
         rejectReason: string | null;
         createdByIP: string;
         updatedByIP: string | null;
+        panelRefId: number | null;
     }>;
 };
 export {};
