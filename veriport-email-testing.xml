@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VeriportMroData version="1.5">
+ <VeriportReportId>56789988</VeriportReportId>
+
+ <TestInformation>
+  <ReportRevisionNumber>rev1</ReportRevisionNumber>
+  <ReportUpdate>false</ReportUpdate>
+  <ReasonForTestLab>PRE</ReasonForTestLab>
+  <ReasonForTest>PE</ReasonForTest>
+  <ReasonForTestName>Pre-Employment</ReasonForTestName>
+  <Regulated>true</Regulated>
+  <TestingAuthority>DOT</TestingAuthority>
+  <DotAgency>FMCSA</DotAgency>
+ </TestInformation>
+
+ <Customer>
+  <CustomerAccountId>1235</CustomerAccountId>
+  <CustomerName>Global Testing Services</CustomerName>
+  <CustomerAddress1>456 Market Street</CustomerAddress1>
+  <CustomerAddress2>Suite 200</CustomerAddress2>
+  <CustomerCity>Dallas</CustomerCity>
+  <CustomerStateProv>TX</CustomerStateProv>
+  <CustomerZipPostalCode>75001</CustomerZipPostalCode>
+  <CustomerCountry>US</CustomerCountry>
+  <CustomerPhone>214-555-1212</CustomerPhone>
+ </Customer>
+
+ <Client>
+  <ClientAccountId>4322</ClientAccountId>
+  <ClientCustomerAccountNumber>B5678</ClientCustomerAccountNumber>
+  <ClientName>Prime Trucking LLC</ClientName>
+  <ClientAddress1>789 Business Rd</ClientAddress1>
+  <ClientAddress2>Unit 5</ClientAddress2>
+  <ClientCity>Austin</ClientCity>
+  <ClientStateProv>TX</ClientStateProv>
+  <ClientZipPostalCode>73301</ClientZipPostalCode>
+  <ClientCountry>US</ClientCountry>
+  <ClientPhone>512-555-1212</ClientPhone>
+  <ClientNonRegQuant>true</ClientNonRegQuant>
+ </Client>
+
+ <Donor>
+  <DonorSystemId>D7K9PL</DonorSystemId>
+  <DonorFirst>Muhammad</DonorFirst>
+  <DonorMiddle>Ali</DonorMiddle>
+  <DonorLast>Chaudhry</DonorLast>
+  <DonorPhone>214-333-1111</DonorPhone>
+  <DonorEmail>ammar.test2@gmail.com</DonorEmail>
+  <DonorId>TX99887766</DonorId>
+  <DonorIdType>DL</DonorIdType>
+  <DonorIdCdlStateProv>TX</DonorIdCdlStateProv>
+  <DonorIdCdlCountry>US</DonorIdCdlCountry>
+  <DonorDob>11-05-2004</DonorDob>
+ </Donor>
+
+ <Mro>
+  <MroAccountId>8799</MroAccountId>
+  <MroCompanyName>Advanced MRO Services</MroCompanyName>
+  <MroAddress1>901 Corporate Blvd</MroAddress1>
+  <MroAddress2>Suite 400</MroAddress2>
+  <MroCity>Houston</MroCity>
+  <MroStateProv>TX</MroStateProv>
+  <MroZipPostalCode>77001</MroZipPostalCode>
+  <MroCountry>US</MroCountry>
+  <MroPhone>713-555-1111</MroPhone>
+  <MroFax>713-555-2222</MroFax>
+  <MroEmail>support@advancedmro.com</MroEmail>
+ </Mro>
+
+ <CollectionSite>
+  <CollectionSiteId>34568</CollectionSiteId>
+  <CollectionSiteCode>Site 2001</CollectionSiteCode>
+  <CollectionSiteCustomerCode>Site 3001</CollectionSiteCustomerCode>
+  <CollectionSiteName>Downtown Collection</CollectionSiteName>
+  <CollectionSiteAddress1>321 Center Street</CollectionSiteAddress1>
+  <CollectionSiteAddress2>Floor 2</CollectionSiteAddress2>
+  <CollectionSiteCity>Dallas</CollectionSiteCity>
+  <CollectionSiteStateProv>TX</CollectionSiteStateProv>
+  <CollectionSiteZipPostalCode>75002</CollectionSiteZipPostalCode>
+  <CollectionSiteCountry>US</CollectionSiteCountry>
+  <CollectionSitePhone>214-777-1212</CollectionSitePhone>
+ </CollectionSite>
+
+ <Collector>
+  <CollectorName>Sarah Johnson</CollectorName>
+  <CollectorPhone>214-888-1212</CollectorPhone>
+  <CollectorFax>214-888-2222</CollectorFax>
+  <CollectorOther>Sample Text</CollectorOther>
+  <CollectorEmail>sarah@collector.com</CollectorEmail>
+ </Collector>
+
+ <Lab>
+  <LabName>LabCorp</LabName>
+  <LabId>46</LabId>
+  <LabAddress1>654 Lab Street</LabAddress1>
+  <LabAddress2>Unit 10</LabAddress2>
+  <LabCity>Dallas</LabCity>
+  <LabStateProv>TX</LabStateProv>
+  <LabZipPostalCode>75003</LabZipPostalCode>
+  <LabCountry>US</LabCountry>
+  <LabPhone>214-999-1212</LabPhone>
+  <LabFax>214-999-2222</LabFax>
+  <LabAccountNumber>45679</LabAccountNumber>
+  <LabSubaccountNumber>9877</LabSubaccountNumber>
+  <LabSpecimenId>CF18142153</LabSpecimenId>
+  <LabAccessionNumber>22334455</LabAccessionNumber>
+  <LabCustomerReferenceId>AU223344</LabCustomerReferenceId>
+  <LabCertifyingScientist>David Williams</LabCertifyingScientist>
+ </Lab>
+
+ <Results>
+
+  <MroVerification>
+   <MroName>Dr. Robert Brown</MroName>
+   <MroQualifyingOrganization>MROCC</MroQualifyingOrganization>
+   <MroRegistrationNumber>9876543210</MroRegistrationNumber>
+   <MroOverallResult>Negative</MroOverallResult>
+   <MroMisOverallResult>Negative</MroMisOverallResult>
+  </MroVerification>
+
+  <LabPanel>
+   <Panel>
+    <LabPanelCode>W215</LabPanelCode>
+    <LabPanelName>Urine Drug Test</LabPanelName>
+    <LabSpecimenType>Urine</LabSpecimenType>
+   </Panel>
+
+   <Result>
+    <TestCodeName>Amphetamines</TestCodeName>
+    <TestCodeNumber>AMP</TestCodeNumber>
+    <UnitOfMeasure>ng/mL</UnitOfMeasure>
+    <ScreenCutoff>500</ScreenCutoff>
+    <ConfirmCutoff>250</ConfirmCutoff>
+    <MroResult>Negative</MroResult>
+   </Result>
+
+   <Result>
+    <TestCodeName>Cocaine</TestCodeName>
+    <TestCodeNumber>COC</TestCodeNumber>
+    <UnitOfMeasure>ng/mL</UnitOfMeasure>
+    <ScreenCutoff>150</ScreenCutoff>
+    <ConfirmCutoff>100</ConfirmCutoff>
+    <MroResult>Negative</MroResult>
+   </Result>
+
+   <Result>
+    <TestCodeName>Cannabis</TestCodeName>
+    <TestCodeNumber>THC</TestCodeNumber>
+    <UnitOfMeasure>ng/mL</UnitOfMeasure>
+    <ScreenCutoff>50</ScreenCutoff>
+    <ConfirmCutoff>15</ConfirmCutoff>
+    <MroResult>Negative</MroResult>
+   </Result>
+
+  </LabPanel>
+
+ </Results>
+
+ <ReportTimeline>
+  <SpecimenCollectedDate>03-31-2026</SpecimenCollectedDate>
+  <MroReceivedCcf2Date>03-31-2026</MroReceivedCcf2Date>
+  <LabReceivedDate>04-01-2026</LabReceivedDate>
+  <LabReceivedTime>12:00:00Z</LabReceivedTime>
+  <LabResultedToMroDate>04-02-2026</LabResultedToMroDate>
+  <LabResultedToMroTime>15:30:00Z</LabResultedToMroTime>
+  <MroReportedDate>04-02-2026</MroReportedDate>
+  <MroReportedTime>18:00:00Z</MroReportedTime>
+ </ReportTimeline>
+
+ <MroNotes>
+  <MroLetterComment>Sample MRO comment for testing</MroLetterComment>
+  <MroSafetyAdvisoryComment>Safety advisory test comment</MroSafetyAdvisoryComment>
+ </MroNotes>
+
+ <Documents>
+  <MroLetter>Base64PDFDATA</MroLetter>
+  <SignedCcf2>Base64JPGDATA</SignedCcf2>
+  <Cg719P>Base64PDFDATA</Cg719P>
+ </Documents>
+
+</VeriportMroData>
