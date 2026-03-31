@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <VeriportMroData version="1.5">
- <VeriportReportId>12345678</VeriportReportId>
+ <VeriportReportId>56789989</VeriportReportId>
 
  <TestInformation>
-  <ReportRevisionNumber>revision12345</ReportRevisionNumber>
+  <ReportRevisionNumber>rev2</ReportRevisionNumber>
   <ReportUpdate>false</ReportUpdate>
   <ReasonForTestLab>PRE</ReasonForTestLab>
   <ReasonForTest>PE</ReasonForTest>
