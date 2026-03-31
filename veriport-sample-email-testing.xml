@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VeriportMroData version="1.5">
+ <VeriportReportId>56789988</VeriportReportId>
+ <TestInformation>
+ <ReportRevisionNumber>rev1</ReportRevisionNumber>
+ <ReportUpdate>false</ReportUpdate>
+ <ReasonForTestLab>PE</ReasonForTestLab>
+ <ReasonForTest>PE</ReasonForTest>
+ <ReasonForTestName>Pre-Employment</ReasonForTestName>
+ <Regulated>true</Regulated>
+ <TestingAuthority>DOT</TestingAuthority>
+ <DotAgency>FMCSA</DotAgency>
+ </TestInformation>
+
+ <Customer>
+ <CustomerAccountId>09456155</CustomerAccountId>
+ <CustomerName>ABC Testing Services Inc.</CustomerName>
+ <CustomerAddress1>123 Main St.</CustomerAddress1>
+ <CustomerAddress2>Unit D</CustomerAddress2>
+ <CustomerCity>Barrie</CustomerCity>
+ <CustomerStateProv>ON</CustomerStateProv>
+ <CustomerZipPostalCode>L4N 8W8</CustomerZipPostalCode>
+ <CustomerCountry>CA</CustomerCountry>
+ <CustomerPhone>705-444-2121</CustomerPhone>
+ </Customer>
+
+ <Client>
+ <ClientAccountId>11</ClientAccountId>
+ <ClientCustomerAccountNumber>09456155</ClientCustomerAccountNumber>
+ <ClientName>XYZ Trucking Inc.</ClientName>
+ <ClientAddress1>123 Main St.</ClientAddress1>
+ <ClientAddress2>Unit D</ClientAddress2>
+ <ClientCity>Barrie</ClientCity>
+ <ClientStateProv>ON</ClientStateProv>
+ <ClientZipPostalCode>L4N 8W8</ClientZipPostalCode>
+ <ClientCountry>CA</ClientCountry>
+ <ClientPhone>705-444-2121</ClientPhone>
+ <ClientNonRegQuant>true</ClientNonRegQuant>
+ </Client>
+
+ <Donor>
+ <DonorSystemId>9</DonorSystemId>
+ <DonorFirst>Muhammad</DonorFirst>
+ <DonorMiddle></DonorMiddle>
+ <DonorLast>Ammar Chaudhry</DonorLast>
+ <DonorPhone></DonorPhone>
+ <DonorEmail>muhammadammarchaudhry1@gmail.com</DonorEmail>
+ <DonorId>123456789</DonorId>
+ <DonorIdType>SSN</DonorIdType>
+ <DonorIdCdlStateProv>TX</DonorIdCdlStateProv>
+ <DonorIdCdlCountry>US</DonorIdCdlCountry>
+ <DonorDob>11-05-2004</DonorDob>
+ </Donor>
+
+ <Mro>
+ <MroAccountId>8798</MroAccountId>
+ <MroCompanyName>Super MRO</MroCompanyName>
+ <MroAddress1>123 Main St</MroAddress1>
+ <MroAddress2>Suite 1000</MroAddress2>
+ <MroCity>Houston</MroCity>
+ <MroStateProv>TX</MroStateProv>
+ <MroZipPostalCode>77057</MroZipPostalCode>
+ <MroCountry>US</MroCountry>
+ <MroPhone>705-333-1212</MroPhone>
+ <MroFax>705-222-1212</MroFax>
+ <MroEmail>support@supermro.com</MroEmail>
+ </Mro>
+
+ <CollectionSite>
+ <CollectionSiteId>708392</CollectionSiteId>
+ <CollectionSiteCode>Site 1234</CollectionSiteCode>
+ <CollectionSiteCustomerCode>Site 4321</CollectionSiteCustomerCode>
+ <CollectionSiteName>Main Office</CollectionSiteName>
+ <CollectionSiteAddress1>123 Main St.</CollectionSiteAddress1>
+ <CollectionSiteAddress2>Unit D</CollectionSiteAddress2>
+ <CollectionSiteCity>Barrie</CollectionSiteCity>
+ <CollectionSiteStateProv>ON</CollectionSiteStateProv>
+ <CollectionSiteZipPostalCode>L4N 8W8</CollectionSiteZipPostalCode>
+ <CollectionSiteCountry>CA</CollectionSiteCountry>
+ <CollectionSitePhone>705-444-2121</CollectionSitePhone>
+ </CollectionSite>
+
+ <Collector>
+ <CollectorName>Jennifer Smith</CollectorName>
+ <CollectorPhone>705-555-1212</CollectorPhone>
+ <CollectorFax>705-555-2121</CollectorFax>
+ <CollectorOther>alpha/numeric</CollectorOther>
+ <CollectorEmail>collector@collection.com</CollectorEmail>
+ </Collector>
+
+ <Lab>
+ <LabName>Clinical Reference Laboratory, Inc.</LabName>
+ <LabId>45</LabId>
+ <LabAddress1>123 Main St.</LabAddress1>
+ <LabAddress2>Unit D</LabAddress2>
+ <LabCity>Barrie</LabCity>
+ <LabStateProv>ON</LabStateProv>
+ <LabZipPostalCode>L4N 8W8</LabZipPostalCode>
+ <LabCountry>CA</LabCountry>
+ <LabPhone>705-444-2121</LabPhone>
+ <LabFax>705-444-1212</LabFax>
+ <LabAccountNumber>45678</LabAccountNumber>
+ <LabSubaccountNumber>9876</LabSubaccountNumber>
+ <LabSpecimenId>591183753</LabSpecimenId>
+ <LabAccessionNumber>12345678</LabAccessionNumber>
+ <LabCustomerReferenceId>AU123456</LabCustomerReferenceId>
+ <LabCertifyingScientist>Brianna Dingman</LabCertifyingScientist>
+ </Lab>
+
+ <Results>
+ <MroVerification>
+ <MroName>Dr. Alfred Smith</MroName>
+ <MroQualifyingOrganization>MROCC</MroQualifyingOrganization>
+ <MroRegistrationNumber>1234567890</MroRegistrationNumber>
+ <MroOverallResult>Pending</MroOverallResult>
+ <MroMisOverallResult>Pending</MroMisOverallResult>
+ </MroVerification>
+ </Results>
+
+ <ReportTimeline>
+ <SpecimenCollectedDate>03-30-2026</SpecimenCollectedDate>
+ <MroReceivedCcf2Date>03-30-2026</MroReceivedCcf2Date>
+ <LabReceivedDate>03-30-2026</LabReceivedDate>
+ <LabReceivedTime>15:19:04Z</LabReceivedTime>
+ <LabResultedToMroDate/>
+ <LabResultedToMroTime/>
+ <MroReportedDate/>
+ <MroReportedTime/>
+ <MroRecalledDate/>
+ <MroRecalledTime/>
+ <MroRereleasedDate/>
+ <MroRereleasedTime/>
+ </ReportTimeline>
+
+ <MroNotes>
+ <MroLetterComment>Status Pending</MroLetterComment>
+ <MroSafetyAdvisoryComment></MroSafetyAdvisoryComment>
+ </MroNotes>
+
+ <Documents>
+ <MroLetter></MroLetter>
+ <SignedCcf2></SignedCcf2>
+ <Cg719P></Cg719P>
+ </Documents>
+
+</VeriportMroData>
