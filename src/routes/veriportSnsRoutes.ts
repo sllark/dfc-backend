@@ -2,7 +2,10 @@ import { Router, Request, Response } from "express";
 import express from "express";
 import axios from "axios";
 import xml2js from "xml2js";
-import { PrismaClient } from "../generated/prisma";
+import { PrismaClient } from "@prisma/client";
+import { sendMailWithAttachments } from "../utils/sendemail";
+import { encryptDeterministic } from "../utils/encryption";
+import { isPdfBuffer } from "../utils/pdfBytes";
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -35,6 +38,41 @@ async function parseVeriportXmlToJson(rawXml: string): Promise<any> {
     trim: true,
   });
   return parser.parseStringPromise(rawXml);
+}
+
+function extract(obj: any, path: string): any {
+  return path.split(".").reduce((acc: any, key: string) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);
+}
+
+function sanitizeEmail(input: any): string | null {
+  if (!input) return null;
+  const s = String(input).trim();
+  if (!s) return null;
+  // very light validation
+  if (!s.includes("@") || s.includes(" ")) return null;
+  return s;
+}
+
+function decodeMaybeBase64Pdf(raw: string): Buffer | null {
+  const trimmed = String(raw).trim();
+  if (!trimmed || trimmed.length < 100) return null;
+  try {
+    const buf = Buffer.from(trimmed, "base64");
+    if (!buf.length || !isPdfBuffer(buf)) return null;
+    return buf;
+  } catch {
+    return null;
+  }
+}
+
+/** XML JSON may include Documents.MroLetter (base64 PDF). Used for email attachment only — not Cloudinary. */
+function extractEmbeddedMroLetterPdf(veriportMroData: any): Buffer | null {
+  const raw =
+    extract(veriportMroData, "Documents.MroLetter") ??
+    extract(veriportMroData, "documents.mroLetter") ??
+    extract(veriportMroData, "Documents.mroLetter");
+  if (!raw || typeof raw !== "string") return null;
+  return decodeMaybeBase64Pdf(raw);
 }
 
 // AWS SNS often posts JSON with Content-Type: text/plain; charset=UTF-8
@@ -104,7 +142,7 @@ router.post(
         const xmlResp = await axios.get(downloadUrl, {
           timeout: 30000,
           responseType: "text",
-          transformResponse: (r) => r,
+          transformResponse: (r: string) => r,
         });
 
         const rawXml = typeof xmlResp.data === "string" ? xmlResp.data : String(xmlResp.data);
@@ -175,6 +213,127 @@ router.post(
             parsedJson: JSON.stringify(parsed),
           },
         });
+
+        // ========= Link donor to user + optional email (embedded XML PDF only). Cloudinary comes from client POST. =========
+        // Non-blocking for SNS delivery: never fail the SNS request if email fails.
+        try {
+          const donorEmail =
+            sanitizeEmail(extract(veriportMroData, "Donor.DonorEmail")) ??
+            sanitizeEmail(extract(veriportMroData, "donor.donorEmail"));
+
+          const reportIdStrForUrl = reportId.toString();
+          const reportWhere = {
+            veriportReportId_reportRevisionNumber: {
+              veriportReportId: reportId,
+              reportRevisionNumber: revision,
+            },
+          };
+
+          let recipientUserId: number | null = null;
+          let donorEmailEnc: string | null = null;
+          if (donorEmail) {
+            donorEmailEnc = encryptDeterministic(donorEmail.toLowerCase());
+            try {
+              const user = await prisma.user.findUnique({
+                where: { email: donorEmailEnc },
+                select: { id: true },
+              });
+              recipientUserId = user?.id ?? null;
+            } catch {
+              recipientUserId = null;
+            }
+            await prisma.veriportMroReport.update({
+              where: reportWhere,
+              data: { donorEmailEnc, recipientUserId },
+            });
+          }
+
+          const embeddedPdf = extractEmbeddedMroLetterPdf(veriportMroData);
+
+          if (!donorEmail) {
+            await prisma.veriportMroReport.update({
+              where: reportWhere,
+              data: { emailStatus: "FAILED", emailError: "Missing DonorEmail in report payload" },
+            });
+          } else if (embeddedPdf) {
+            const overallResult =
+              extract(veriportMroData, "Results.MroVerification.MroOverallResult") ??
+              extract(veriportMroData, "Results.MroVerification.MroMisOverallResult") ??
+              "Available in attached report";
+
+            const subject = `Your drug test results are ready (Report ${reportIdStrForUrl})`;
+            const body = `Hello,
+
+Your test results are now available.
+
+Report ID: ${reportIdStrForUrl}
+Revision: ${revision ?? "N/A"}
+Overall result: ${overallResult}
+
+Please find your PDF report attached.
+`;
+
+            try {
+              await sendMailWithAttachments(donorEmail, subject, body, [
+                {
+                  filename: `veriport-report-${reportIdStrForUrl}${revision ? `-${revision}` : ""}.pdf`,
+                  contentType: "application/pdf",
+                  content: embeddedPdf,
+                },
+              ]);
+
+              await prisma.veriportMroReport.update({
+                where: reportWhere,
+                data: { emailedTo: donorEmail, emailedAt: new Date(), emailStatus: "SENT", emailError: null },
+              });
+            } catch (mailErr: any) {
+              await prisma.veriportMroReport.update({
+                where: reportWhere,
+                data: { emailStatus: "FAILED", emailError: mailErr?.message ?? String(mailErr) },
+              });
+            }
+          } else {
+            const overallResult =
+              extract(veriportMroData, "Results.MroVerification.MroOverallResult") ??
+              extract(veriportMroData, "Results.MroVerification.MroMisOverallResult") ??
+              "Available in portal";
+
+            const subject = `Your drug test results are ready (Report ${reportIdStrForUrl})`;
+            const body = `Hello,
+
+Your test results are now available.
+
+Report ID: ${reportIdStrForUrl}
+Revision: ${revision ?? "N/A"}
+Overall result: ${overallResult}
+
+Please sign in to the portal to view and download your PDF report (print layout matches your account).
+`;
+
+            try {
+              await sendMailWithAttachments(donorEmail, subject, body, []);
+              await prisma.veriportMroReport.update({
+                where: reportWhere,
+                data: { emailedTo: donorEmail, emailedAt: new Date(), emailStatus: "SENT", emailError: null },
+              });
+            } catch (mailErr: any) {
+              await prisma.veriportMroReport.update({
+                where: reportWhere,
+                data: { emailStatus: "FAILED", emailError: mailErr?.message ?? String(mailErr) },
+              });
+            }
+          }
+        } catch (emailErr: any) {
+          await prisma.veriportMroReport.update({
+            where: {
+              veriportReportId_reportRevisionNumber: {
+                veriportReportId: reportId,
+                reportRevisionNumber: revision,
+              },
+            },
+            data: { emailStatus: "FAILED", emailError: emailErr?.message ?? String(emailErr) },
+          });
+        }
 
         return res.status(200).json({
           success: true,

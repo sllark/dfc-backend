@@ -116,7 +116,7 @@ app.use('/api/labcorp', labcorpRoute);
 
 // Labcorp REST routes (new)
 app.use('/api', labcorpRestRoutes);
-app.use('/api', veriportRoutes);
+app.use('/api', AuthMiddleware.authenticate, veriportRoutes);
 
 // Labcorp webhook callback route (REST subscription callbacks)
 app.use('/', labcorpWebhookRoutes);

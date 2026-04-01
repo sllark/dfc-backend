@@ -1,4 +1,4 @@
-import { PrismaClient } from "../src/generated/prisma";
+import { PrismaClient } from "@prisma/client";
 import { encryptDeterministic } from "../src/utils/encryption";
 
 const prisma = new PrismaClient();

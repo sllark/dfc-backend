@@ -41,7 +41,12 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
   },
+  "include": [
+    "src/**/*.ts"
+  ],
   "exclude": [
+    "dist",
+    "node_modules",
     "scripts/migrateEmails.ts",
     "scripts/**/*.ts"
   ]

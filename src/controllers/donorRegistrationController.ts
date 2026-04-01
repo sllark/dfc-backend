@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../utils/types";
 import { donorRegistrationService } from "../services/donorRegistrationService";
 import { getClientIp } from "../utils/ipUtils";
-import { Prisma } from "../generated/prisma";
+import { Prisma } from "@prisma/client";
 
 type RoleType = "ADMIN" | "USER" | "SUPERVISOR" | "MODERATOR" | undefined;
 

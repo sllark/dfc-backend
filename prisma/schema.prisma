@@ -1,6 +1,5 @@
 generator client {
   provider      = "prisma-client-js"
-  output        = "../src/generated/prisma"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
@@ -166,6 +165,24 @@ model VeriportMroReport {
   rawXml        String
   parsedJson    String?
   receivedAt    DateTime @default(now())
+  emailedTo     String?
+  emailedAt     DateTime?
+  emailStatus   String?  // SENT | FAILED
+  emailError    String?
+
+  // Recipient linkage (for secure access control)
+  donorEmailEnc     String?
+  recipientUserId   Int?
+
+  // PDF storage (Cloudinary - authenticated raw)
+  pdfPublicId       String?
+  pdfVersion        Int?
+  pdfFormat         String?
+  pdfResourceType   String?
+  pdfType           String?
+  pdfUploadedAt     DateTime?
+  pdfStatus         String? // UPLOADED | FAILED
+  pdfError          String?
 
   @@index([veriportReportId])
   @@unique([veriportReportId, reportRevisionNumber])

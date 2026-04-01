@@ -127,6 +127,12 @@ export const panelMatrixController = {
     async comparisonHtml(req: AuthenticatedRequest, res: Response) {
         const table = await panelMatrixService.getComparisonTable();
 
+        const accept = String(req.headers["accept"] ?? "");
+        const format = typeof req.query.format === "string" ? req.query.format.toLowerCase() : "";
+        if (format === "json" || accept.includes("application/json")) {
+            return res.json({ success: true, data: table });
+        }
+
         const check = `<span class="chk" aria-label="Included">✓</span>`;
         const dash = `<span class="dash" aria-label="Not included">–</span>`;
 

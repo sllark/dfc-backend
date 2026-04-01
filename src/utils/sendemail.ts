@@ -72,3 +72,65 @@ export async function sendMail(to: string, subject: string, text: string) {
         throw new Error(`Failed to send email: ${err.message}`);
     }
 }
+
+export type EmailAttachment = {
+    filename: string;
+    contentType: string;
+    /** Raw PDF bytes (preferred — Resend accepts Buffer). */
+    content?: Buffer;
+    /** Base64-encoded file body (if `content` is not set). */
+    contentBase64?: string;
+};
+
+export async function sendMailWithAttachments(
+    to: string,
+    subject: string,
+    text: string,
+    attachments: EmailAttachment[]
+) {
+    try {
+        if (resend) {
+            const { data, error } = await resend.emails.send({
+                from: EMAIL_FROM,
+                to,
+                subject,
+                text,
+                attachments: attachments.map((a) => ({
+                    filename: a.filename,
+                    content: a.content ?? a.contentBase64,
+                    content_type: a.contentType,
+                })) as any,
+            });
+
+            if (error) {
+                console.error("Resend API error:", error);
+                throw new Error(`Failed to send email: ${error.message}`);
+            }
+
+            console.log("Email sent via Resend:", data?.id);
+            return data;
+        }
+
+        if (mailer) {
+            const result = await mailer.sendMail({
+                from: `"Drug Free Compliance" <${EMAIL_FROM}>`,
+                to,
+                subject,
+                text,
+                attachments: attachments.map((a) => ({
+                    filename: a.filename,
+                    content: a.content ?? Buffer.from(a.contentBase64 ?? "", "base64"),
+                    contentType: a.contentType,
+                })),
+            });
+
+            console.log("Email sent via Mailpit/Nodemailer:", result.messageId);
+            return result;
+        }
+
+        throw new Error("No email provider configured. Set RESEND_API_KEY for production or SMTP settings for local.");
+    } catch (err: any) {
+        console.error("Email send failed:", err);
+        throw new Error(`Failed to send email: ${err.message}`);
+    }
+}

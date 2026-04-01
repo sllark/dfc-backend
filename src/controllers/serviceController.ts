@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Prisma, Service } from "../generated/prisma";
+import { Prisma, Service } from "@prisma/client";
 import { serviceService } from "../services/serviceService";
 import { uploadFile } from "../middlewares/uploadMiddleware";
 

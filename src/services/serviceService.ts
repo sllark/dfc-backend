@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from "../generated/prisma";
+import { PrismaClient, Prisma } from "@prisma/client";
 import { encryptDeterministic } from "../utils/encryption";
 
 interface GetAllParams {
