@@ -27,7 +27,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY package.json package-lock.json ./
 COPY prisma ./prisma/
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/src/generated ./dist/generated
+# Prisma Client is generated into node_modules/.prisma (see prisma generate); no separate src/generated copy.
 
 RUN mkdir -p uploads
 
