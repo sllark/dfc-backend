@@ -5,9 +5,13 @@ import { paymentService } from "../services/paymentService";
 import { getClientIp } from "../utils/ipUtils";
 import { panelMatrixService } from "../services/panelMatrixService";
 import { decryptDeterministic } from "../utils/encryption";
+import { sendMail } from "../utils/sendemail";
+import { buildOrderConfirmationEmail } from "../utils/transactionalEmailTemplates";
+import { PrismaClient } from "@prisma/client";
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {});
+const prisma = new PrismaClient();
 
 // Stripe requires raw body for webhooks
 router.post("/", express.raw({ type: "application/json" }), async (req, res) => {
@@ -252,6 +256,48 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
                 console.log("   Payment ID:", paymentRecord.id);
                 console.log("   Amount:", `$${paymentRecord.amount}`);
                 console.log("   Status:", paymentRecord.status);
+
+                // 3️⃣ Send order confirmation email (non-fatal)
+                try {
+                    const donorEmail = donorInfo.donorEmail || session.customer_email || "";
+                    if (donorEmail && String(donorEmail).includes("@")) {
+                        const tpl = buildOrderConfirmationEmail({
+                            donorFirstName: donorInfo.donorNameFirst ?? null,
+                            donorLastName: donorInfo.donorNameLast ?? null,
+                            orderId: String(paymentRecord.id),
+                            amount: Number(paymentRecord.amount),
+                            currency: paymentRecord.currency,
+                            panelCode: donorData.panelId,
+                            registrationExpirationDate: donorData.registrationExpirationDate,
+                        });
+                        const sendResult = await sendMail(donorEmail, tpl.subject, tpl.text);
+                        await prisma.payment.update({
+                            where: { id: paymentRecord.id },
+                            data: {
+                                orderEmailSentAt: new Date(),
+                                orderEmailStatus: "SENT",
+                                orderEmailError: null,
+                                orderEmailProviderId: sendResult?.messageId ?? null,
+                            },
+                        });
+                    } else {
+                        await prisma.payment.update({
+                            where: { id: paymentRecord.id },
+                            data: {
+                                orderEmailStatus: "FAILED",
+                                orderEmailError: "Missing customer email for order confirmation",
+                            },
+                        });
+                    }
+                } catch (emailErr: any) {
+                    await prisma.payment.update({
+                        where: { id: paymentRecord.id },
+                        data: {
+                            orderEmailStatus: "FAILED",
+                            orderEmailError: emailErr?.message ?? String(emailErr),
+                        },
+                    });
+                }
                 
                 console.log("\n" + "=".repeat(80));
                 console.log("🎉 SUCCESS: Donor & Payment saved successfully!");

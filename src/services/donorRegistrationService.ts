@@ -6,6 +6,7 @@ import {
     encryptDeterministic,
     decryptDeterministic,
 } from "../utils/encryption";
+import { buildRegistrationSuccessEmail } from "../utils/transactionalEmailTemplates";
 import axios from 'axios';
 import xml2js from 'xml2js';
 
@@ -103,6 +104,23 @@ export const donorRegistrationService = {
         const created = await prisma.donorRegistration.create({ data: encryptedData });
 
         await createAuditLog(data.createdBy, ip, "CREATE", "DonorRegistration", created.id, created);
+
+        // Non-fatal registration success email: registration creation should not fail if email fails.
+        try {
+            const donorEmail = typeof data.donorEmail === "string" ? data.donorEmail.trim() : "";
+            if (donorEmail && donorEmail.includes("@")) {
+                const tpl = buildRegistrationSuccessEmail({
+                    donorFirstName: typeof data.donorNameFirst === "string" ? data.donorNameFirst : null,
+                    donorLastName: typeof data.donorNameLast === "string" ? data.donorNameLast : null,
+                    registrationId: created.id,
+                    panelCode: typeof data.panelId === "string" ? data.panelId : null,
+                    registrationExpirationDate: registrationExpirationDate,
+                });
+                await sendMail(donorEmail, tpl.subject, tpl.text);
+            }
+        } catch (emailErr: any) {
+            console.error("Registration success email failed:", emailErr?.message ?? String(emailErr));
+        }
 
         return created;
     },

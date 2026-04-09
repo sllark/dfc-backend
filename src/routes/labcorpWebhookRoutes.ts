@@ -1,7 +1,19 @@
 import { Router, Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 import { decryptLabcorpPayload } from "../utils/labcorpEncryption";
 
 const router = Router();
+const prisma = new PrismaClient();
+
+function readAny(obj: any, paths: string[]): any {
+  for (const path of paths) {
+    const value = path.split(".").reduce((acc: any, key: string) => (acc == null ? undefined : acc[key]), obj);
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      return value;
+    }
+  }
+  return undefined;
+}
 
 router.post(
   "/webhooks/labcorp/appointment",
@@ -16,12 +28,40 @@ router.post(
 
       // Labcorp sends encrypted payload { value: "..." }
       const decryptedAppointment = decryptLabcorpPayload<any>(req.body);
-
-      // TODO: integrate with your appointments persistence as needed
       console.log(
         "[Labcorp Webhook] Decrypted appointment callback:",
         decryptedAppointment
       );
+
+      const confirmationNumber = String(
+        readAny(decryptedAppointment, [
+          "confirmationNumber",
+          "appointment.confirmationNumber",
+          "data.confirmationNumber",
+        ]) ?? ""
+      ).trim();
+      const trackingId = String(
+        readAny(decryptedAppointment, ["trackingId", "id", "appointment.trackingId", "data.id"]) ?? ""
+      ).trim();
+      const status = String(
+        readAny(decryptedAppointment, ["status", "appointment.status", "data.status"]) ?? "UPDATED"
+      ).trim().toUpperCase();
+
+      const where = confirmationNumber
+        ? { confirmationNumber }
+        : trackingId
+          ? { trackingId }
+          : null;
+
+      if (where) {
+        await prisma.appointment.updateMany({
+          where,
+          data: {
+            status,
+            lastLabcorpResponse: JSON.stringify(decryptedAppointment),
+          },
+        });
+      }
 
       return res.status(200).json({ success: true, received: true });
     } catch (error: any) {

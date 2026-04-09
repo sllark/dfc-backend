@@ -43,6 +43,13 @@ router.get(
   labcorpRestController.getAppointmentTimes
 );
 
+// GET tracked appointments for current authenticated user
+router.get(
+  "/appointments/my",
+  AuthMiddleware.authenticate,
+  labcorpRestController.getMyAppointments
+);
+
 // POST book an appointment (Labcorp REST, encrypted)
 router.post(
   "/appointments",

@@ -9,7 +9,7 @@ A Node.js/Express API for managing donor registrations, services, payments, and 
 - **Database**: PostgreSQL with Prisma ORM
 - **Authentication**: JWT (JSON Web Tokens)
 - **Payment Processing**: Stripe
-- **Email**: Nodemailer
+- **Email**: Resend (production) + SMTP/Mailpit (local dev)
 - **External Integration**: Labcorp SOAP API
 
 ## Prerequisites
@@ -75,9 +75,19 @@ ENC_KEY="your-64-character-hex-encryption-key-32-bytes-for-aes-256"
 # Generate ENC_IV with: node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"
 ENC_IV="your-32-character-hex-initialization-vector"
 
-# Email Configuration (for nodemailer)
-EMAIL_USER="your-email@gmail.com"
-EMAIL_PASS="your-app-password"
+# Email Configuration
+# Production (recommended): Resend
+RESEND_API_KEY="re_..."
+EMAIL_FROM="no-reply@dfctest.com"
+#
+# Local development: SMTP (Mailpit)
+SMTP_HOST="localhost"
+SMTP_PORT=1025
+#
+# Automated reminder job (optional)
+ENABLE_TEST_REMINDER_CRON=false
+TEST_REMINDER_CRON_MINUTES=60
+TEST_REMINDER_HOURS_AHEAD=24
 
 # Labcorp Integration
 LABCORP_USER_ID="your-labcorp-user-id"
@@ -93,6 +103,7 @@ STRIPE_WEBHOOK_SECRET="whsec_your-webhook-secret"
 PORT=3000
 # Use '0.0.0.0' to allow remote access, or 'localhost' for local-only access
 HOST=0.0.0.0
+# Used for links in email templates (portal links).
 NEXT_PUBLIC_BASE_URL="http://localhost:3000"
 ```
 
@@ -190,6 +201,23 @@ Run the API, PostgreSQL, PgAdmin, and Mailpit with Docker Compose. All keys and 
 - `GET /api/donors` - List donor registrations (authenticated)
 - `POST /api/donors` - Create donor registration (authenticated)
 - `PUT /api/donors/:id` - Update donor registration (authenticated)
+
+### Veriport Reports (authenticated)
+- `GET /api/veriport/reports` - List reports visible to the logged-in user
+- `GET /api/veriport/reports?donorRegistrationId=:id` - List reports linked to a specific registration (best-effort linkage by user/email)
+- `GET /api/veriport/reports/:veriportReportId` - Get parsed report payload (latest or `?revision=...`)
+- `GET /api/veriport/reports/:veriportReportId/pdf` - Get short-lived signed URL for official PDF (`pdfStatus` must be `UPLOADED`)
+- `POST /api/veriport/reports/:veriportReportId/email-pdf` - Email stored PDF to donor/user
+
+### Email Automation (authenticated)
+- `POST /api/email/reminders/run` - Trigger reminder email job manually (ADMIN/SUPERVISOR/MODERATOR)
+
+## Report/Test Linkage and Access Rules
+
+- Reports are stored in `VeriportMroReport` by natural key: `veriportReportId + reportRevisionNumber`.
+- Access is allowed for `ADMIN`, `SUPERVISOR`, `MODERATOR`, or matching recipient/donor linkage.
+- PDF download availability depends on `pdfStatus === "UPLOADED"` and `pdfPublicId` presence.
+- Official signed report handling: only store/distribute provider-origin `MroLetter` PDFs; do not generate a fake MRO letter.
 
 ### Payments
 - `GET /api/payments` - List payments (authenticated)

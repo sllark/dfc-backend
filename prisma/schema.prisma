@@ -28,6 +28,7 @@ model User {
   updatedServices   Service[]           @relation("UpdatedServices")
   DonorRegistration DonorRegistration[]
   Payment           Payment[]
+  appointments      Appointment[]
 }
 
 model PasswordReset {
@@ -86,6 +87,7 @@ model DonorRegistration {
   donorSex                   String?
   donorDateOfBirth           DateTime?
   donorEmail                 String
+  donorEmailEnc              String?
   donorStateOfResidence      String
   donorSSN                   String?
   serviceId                  String?
@@ -110,11 +112,44 @@ model DonorRegistration {
   isActive                   Boolean  @default(true)
   createdAt                  DateTime @default(now())
   updatedAt                  DateTime @updatedAt
+  reminderEmailSentAt        DateTime?
+  reminderEmailStatus        String?
+  reminderEmailError         String?
 
   // Relations
   user     User      @relation(fields: [userId], references: [id])
   payments Payment[]
   panel    Panel?    @relation(fields: [panelRefId], references: [id])
+  appointments Appointment[]
+
+  @@index([donorEmailEnc])
+}
+
+model Appointment {
+  id                  Int       @id @default(autoincrement())
+  userId              Int
+  donorRegistrationId Int?
+  confirmationNumber  String?   @unique
+  trackingId          String?
+  appointmentDate     DateTime
+  timeSlot            String
+  locationId          String
+  serviceId           String
+  panelId             String
+  accountNo           String
+  status              String    @default("BOOKED")
+  lastLabcorpRequest  String?
+  lastLabcorpResponse String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  user              User               @relation(fields: [userId], references: [id])
+  donorRegistration DonorRegistration? @relation(fields: [donorRegistrationId], references: [id])
+
+  @@unique([userId, appointmentDate, timeSlot, locationId, serviceId])
+  @@index([userId])
+  @@index([donorRegistrationId])
+  @@index([appointmentDate])
 }
 
 model Payment {
@@ -131,6 +166,10 @@ model Payment {
   updatedBy           Int? // ✅ who updated it
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+  orderEmailSentAt    DateTime?
+  orderEmailStatus    String?
+  orderEmailError     String?
+  orderEmailProviderId String?
 
   user              User              @relation(fields: [userId], references: [id])
   donorRegistration DonorRegistration @relation(fields: [donorRegistrationId], references: [id])

@@ -50,7 +50,11 @@ export async function sendMail(to: string, subject: string, text: string) {
             }
 
             console.log("Email sent via Resend:", data?.id);
-            return data;
+            return {
+                provider: "resend",
+                messageId: data?.id ?? null,
+                raw: data ?? null,
+            };
         }
 
         // Local: Use Mailpit/Nodemailer
@@ -63,7 +67,11 @@ export async function sendMail(to: string, subject: string, text: string) {
             });
 
             console.log("Email sent via Mailpit/Nodemailer:", result.messageId);
-            return result;
+            return {
+                provider: "smtp",
+                messageId: result.messageId ?? null,
+                raw: result ?? null,
+            };
         }
 
         throw new Error("No email provider configured. Set RESEND_API_KEY for production or SMTP settings for local.");
@@ -108,7 +116,11 @@ export async function sendMailWithAttachments(
             }
 
             console.log("Email sent via Resend:", data?.id);
-            return data;
+            return {
+                provider: "resend",
+                messageId: data?.id ?? null,
+                raw: data ?? null,
+            };
         }
 
         if (mailer) {
@@ -125,7 +137,11 @@ export async function sendMailWithAttachments(
             });
 
             console.log("Email sent via Mailpit/Nodemailer:", result.messageId);
-            return result;
+            return {
+                provider: "smtp",
+                messageId: result.messageId ?? null,
+                raw: result ?? null,
+            };
         }
 
         throw new Error("No email provider configured. Set RESEND_API_KEY for production or SMTP settings for local.");

@@ -12,7 +12,7 @@ export async function canAccessVeriportReport(
   userId: number,
   role: string | undefined
 ): Promise<boolean> {
-  if (role === "ADMIN") return true;
+  if (role === "ADMIN" || role === "SUPERVISOR" || role === "MODERATOR") return true;
   if (report.recipientUserId === userId) return true;
   if (report.donorEmailEnc) {
     const u = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });

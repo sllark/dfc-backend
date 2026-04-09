@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 import { AuthenticatedRequest } from "../utils/types";
 import {
   getAppointmentTimes,
@@ -19,6 +20,35 @@ import {
   deleteSubscription,
 } from "../services/labcorp/subscriptionsService";
 import { labcorpRequest } from "../utils/labcorpRestClient";
+import { decryptDeterministic } from "../utils/encryption";
+
+const prisma = new PrismaClient();
+
+function readAny(obj: any, paths: string[]): any {
+  for (const path of paths) {
+    const value = path.split(".").reduce((acc: any, key: string) => (acc == null ? undefined : acc[key]), obj);
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      return value;
+    }
+  }
+  return undefined;
+}
+
+function toDateOnly(value: any): string | null {
+  if (!value) return null;
+  const s = String(value).trim();
+  if (!s) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString().slice(0, 10);
+}
+
+function normalizeTimeSlot(value: any): string | null {
+  if (!value) return null;
+  const s = String(value).trim();
+  return s.length > 0 ? s : null;
+}
 
 export const labcorpRestController = {
   // ===== Health =====
@@ -165,6 +195,13 @@ export const labcorpRestController = {
   async bookAppointment(req: AuthenticatedRequest, res: Response) {
     try {
       const body = req.body;
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
 
       // Labcorp requires patient email; basic presence check here
       const email = body?.patient?.email || body?.email;
@@ -175,7 +212,119 @@ export const labcorpRestController = {
         });
       }
 
+      const donorRegistrationIdRaw = readAny(body, [
+        "donorRegistrationId",
+        "metadata.donorRegistrationId",
+      ]);
+      const donorRegistrationId = Number(donorRegistrationIdRaw);
+      if (!Number.isFinite(donorRegistrationId) || donorRegistrationId <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "donorRegistrationId is required to reserve an appointment slot",
+        });
+      }
+
+      const donor = await prisma.donorRegistration.findUnique({
+        where: { id: donorRegistrationId },
+        select: {
+          id: true,
+          userId: true,
+          panelId: true,
+          accountNo: true,
+          accountNoSnapshot: true,
+        },
+      });
+      if (!donor) {
+        return res.status(404).json({
+          success: false,
+          message: "Linked donor registration not found",
+        });
+      }
+      if (donor.userId !== userId) {
+        return res.status(403).json({
+          success: false,
+          message: "Unauthorized donor registration access",
+        });
+      }
+
+      const appointmentDate = toDateOnly(
+        readAny(body, ["appointmentDate", "date", "slot.date", "appointment.date"])
+      );
+      const timeSlot = normalizeTimeSlot(
+        readAny(body, ["timeSlot", "slot", "slot.time", "appointment.time"])
+      );
+      const locationId = String(
+        readAny(body, ["locationId", "location.id", "appointment.locationId"]) ?? ""
+      ).trim();
+      const serviceId = String(
+        readAny(body, ["serviceId", "service.id", "appointment.serviceId"]) ?? ""
+      ).trim();
+      if (!appointmentDate || !timeSlot || !locationId || !serviceId) {
+        return res.status(400).json({
+          success: false,
+          message: "appointmentDate, timeSlot, locationId, and serviceId are required",
+        });
+      }
+
+      const existing = await prisma.appointment.findUnique({
+        where: {
+          userId_appointmentDate_timeSlot_locationId_serviceId: {
+            userId,
+            appointmentDate: new Date(`${appointmentDate}T00:00:00.000Z`),
+            timeSlot,
+            locationId,
+            serviceId,
+          },
+        },
+        select: { id: true, status: true },
+      });
+      if (existing && existing.status !== "CANCELLED") {
+        return res.status(409).json({
+          success: false,
+          message: "Slot already reserved for this user/date/time/location/service",
+        });
+      }
+
       const appointment = await bookAppointment(body);
+
+      const confirmationNumber = String(
+        readAny(appointment, [
+          "confirmationNumber",
+          "appointment.confirmationNumber",
+          "data.confirmationNumber",
+        ]) ?? ""
+      ).trim() || null;
+      const trackingId = String(
+        readAny(appointment, ["trackingId", "id", "appointment.trackingId"]) ?? ""
+      ).trim() || null;
+
+      const accountNoEncrypted = donor.accountNoSnapshot || donor.accountNo || null;
+      const accountNo = accountNoEncrypted ? decryptDeterministic(accountNoEncrypted) : "";
+
+      const appointmentData = {
+        userId,
+        donorRegistrationId: donor.id,
+        confirmationNumber,
+        trackingId,
+        appointmentDate: new Date(`${appointmentDate}T00:00:00.000Z`),
+        timeSlot,
+        locationId,
+        serviceId,
+        panelId: donor.panelId,
+        accountNo,
+        status: "BOOKED",
+        lastLabcorpRequest: JSON.stringify(body),
+        lastLabcorpResponse: JSON.stringify(appointment),
+      };
+
+      if (existing?.id) {
+        await prisma.appointment.update({
+          where: { id: existing.id },
+          data: appointmentData,
+        });
+      } else {
+        await prisma.appointment.create({ data: appointmentData });
+      }
 
       res.status(201).json({
         success: true,
@@ -230,6 +379,15 @@ export const labcorpRestController = {
 
       const appointment = await updateAppointment(confirmationNumber, body);
 
+      await prisma.appointment.updateMany({
+        where: { confirmationNumber },
+        data: {
+          status: "UPDATED",
+          lastLabcorpRequest: JSON.stringify(body),
+          lastLabcorpResponse: JSON.stringify(appointment),
+        },
+      });
+
       res.json({
         success: true,
         data: appointment,
@@ -256,6 +414,15 @@ export const labcorpRestController = {
       }
 
       const result = await cancelAppointment(confirmationNumber, body);
+
+      await prisma.appointment.updateMany({
+        where: { confirmationNumber },
+        data: {
+          status: "CANCELLED",
+          lastLabcorpRequest: JSON.stringify(body),
+          lastLabcorpResponse: JSON.stringify(result),
+        },
+      });
 
       res.json({
         success: true,
@@ -292,6 +459,44 @@ export const labcorpRestController = {
       res.status(500).json({
         success: false,
         message: error.message || "Failed to fetch appointment tracking",
+      });
+    }
+  },
+
+  async getMyAppointments(req: AuthenticatedRequest, res: Response) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
+      const { status, fromDate, toDate, locationId } = req.query;
+      const where: any = { userId };
+      if (status) where.status = String(status);
+      if (locationId) where.locationId = String(locationId);
+      if (fromDate || toDate) {
+        where.appointmentDate = {};
+        if (fromDate) where.appointmentDate.gte = new Date(`${String(fromDate)}T00:00:00.000Z`);
+        if (toDate) where.appointmentDate.lte = new Date(`${String(toDate)}T23:59:59.999Z`);
+      }
+
+      const data = await prisma.appointment.findMany({
+        where,
+        orderBy: [{ appointmentDate: "desc" }, { createdAt: "desc" }],
+      });
+
+      res.json({
+        success: true,
+        data,
+      });
+    } catch (error: any) {
+      console.error("Error fetching tracked appointments:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message || "Failed to fetch tracked appointments",
       });
     }
   },

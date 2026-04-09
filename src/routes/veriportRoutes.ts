@@ -7,7 +7,7 @@ import { getSignedVeriportPdfUrl, uploadVeriportPdf } from "../services/veriport
 import { canAccessVeriportReport } from "../utils/veriportReportAccess";
 import { isPdfBuffer } from "../utils/pdfBytes";
 import axios from "axios";
-import { decryptDeterministic } from "../utils/encryption";
+import { decrypt, decryptDeterministic, encryptDeterministic } from "../utils/encryption";
 import { sendMailWithAttachments } from "../utils/sendemail";
 import { cloudinary } from "../utils/cloudinaryClient";
 
@@ -44,10 +44,40 @@ router.get("/veriport/reports", async (req: AuthenticatedRequest, res: Response)
     if (reportIdQuery) {
       where.veriportReportId = BigInt(reportIdQuery);
     }
+
+    const donorRegistrationIdQuery = req.query.donorRegistrationId as string | undefined;
+    if (donorRegistrationIdQuery) {
+      const donorRegistrationId = Number(donorRegistrationIdQuery);
+      if (!Number.isFinite(donorRegistrationId) || donorRegistrationId <= 0) {
+        return res.status(400).json({ success: false, message: "Invalid donorRegistrationId" });
+      }
+      const donor = await prisma.donorRegistration.findUnique({
+        where: { id: donorRegistrationId },
+        select: { userId: true, donorEmail: true },
+      });
+      if (!donor) {
+        return res.status(404).json({ success: false, message: "Donor registration not found" });
+      }
+      if (role !== "ADMIN" && role !== "SUPERVISOR" && role !== "MODERATOR" && userId !== donor.userId) {
+        return res.status(403).json({ success: false, message: "Unauthorized donorRegistrationId access" });
+      }
+      let donorEmailEnc: string | null = null;
+      try {
+        donorEmailEnc = donor.donorEmail ? encryptDeterministic(decrypt(donor.donorEmail).toLowerCase()) : null;
+      } catch {
+        donorEmailEnc = null;
+      }
+      where.OR = [
+        { recipientUserId: donor.userId },
+        ...(donorEmailEnc ? [{ donorEmailEnc }] : []),
+      ];
+    }
     if (role !== "ADMIN" && userId != null) {
       const u = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
       const emailEnc = u?.email;
-      where.OR = [{ recipientUserId: userId }, ...(emailEnc ? [{ donorEmailEnc: emailEnc }] : [])];
+      if (!where.OR) {
+        where.OR = [{ recipientUserId: userId }, ...(emailEnc ? [{ donorEmailEnc: emailEnc }] : [])];
+      }
     }
 
     const [rows, total] = await Promise.all([
@@ -68,6 +98,8 @@ router.get("/veriport/reports", async (req: AuthenticatedRequest, res: Response)
           emailStatus: true,
           pdfStatus: true,
           pdfPublicId: true,
+          recipientUserId: true,
+          donorEmailEnc: true,
         },
       }),
       prisma.veriportMroReport.count({ where }),
@@ -78,6 +110,11 @@ router.get("/veriport/reports", async (req: AuthenticatedRequest, res: Response)
       data: rows.map((r) => ({
         ...r,
         veriportReportId: r.veriportReportId.toString(),
+        pdfAvailable: Boolean(r.pdfPublicId && r.pdfStatus === "UPLOADED"),
+        linkage: {
+          recipientUserLinked: Boolean(r.recipientUserId),
+          donorEmailLinked: Boolean(r.donorEmailEnc),
+        },
       })),
       total,
       page,

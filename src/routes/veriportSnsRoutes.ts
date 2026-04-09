@@ -6,6 +6,7 @@ import { PrismaClient } from "@prisma/client";
 import { sendMailWithAttachments } from "../utils/sendemail";
 import { encryptDeterministic } from "../utils/encryption";
 import { isPdfBuffer } from "../utils/pdfBytes";
+import { buildVeriportReportEmail } from "../utils/veriportEmailTemplates";
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -188,6 +189,18 @@ router.post(
                 ? false
                 : null;
 
+        // Detect whether this is a new record vs an update so we can send "READY" vs "UPDATED".
+        // Note: if Veriport re-sends identical payload for same (reportId, revision), we avoid re-emailing.
+        const existing = await prisma.veriportMroReport.findUnique({
+          where: {
+            veriportReportId_reportRevisionNumber: {
+              veriportReportId: reportId,
+              reportRevisionNumber: revision,
+            },
+          },
+          select: { id: true, rawXml: true, pdfPublicId: true, pdfVersion: true, pdfStatus: true },
+        });
+
         // Upsert-like behavior using the natural key (reportId + revision)
         const saved = await prisma.veriportMroReport.upsert({
           where: {
@@ -214,7 +227,7 @@ router.post(
           },
         });
 
-        // ========= Link donor to user + optional email (embedded XML PDF only). Cloudinary comes from client POST. =========
+        // ========= Link donor to user + automatic PDF upload + email notification =========
         // Non-blocking for SNS delivery: never fail the SNS request if email fails.
         try {
           const donorEmail =
@@ -249,78 +262,51 @@ router.post(
           }
 
           const embeddedPdf = extractEmbeddedMroLetterPdf(veriportMroData);
+          const overallResult =
+            extract(veriportMroData, "Results.MroVerification.MroOverallResult") ??
+            extract(veriportMroData, "Results.MroVerification.MroMisOverallResult") ??
+            null;
+
+          const payloadUnchanged = Boolean(existing?.rawXml && existing.rawXml === rawXml);
+
+          // UI-owned PDF lifecycle:
+          // Do NOT auto-upload PDF from SNS payload.
+          // PDF availability is controlled by explicit UI upload endpoint:
+          // POST /api/veriport/reports/:veriportReportId/pdf
+          void embeddedPdf;
 
           if (!donorEmail) {
             await prisma.veriportMroReport.update({
               where: reportWhere,
               data: { emailStatus: "FAILED", emailError: "Missing DonorEmail in report payload" },
             });
-          } else if (embeddedPdf) {
-            const overallResult =
-              extract(veriportMroData, "Results.MroVerification.MroOverallResult") ??
-              extract(veriportMroData, "Results.MroVerification.MroMisOverallResult") ??
-              "Available in attached report";
-
-            const subject = `Your drug test results are ready (Report ${reportIdStrForUrl})`;
-            const body = `Hello,
-
-Your test results are now available.
-
-Report ID: ${reportIdStrForUrl}
-Revision: ${revision ?? "N/A"}
-Overall result: ${overallResult}
-
-Please find your PDF report attached.
-`;
-
-            try {
-              await sendMailWithAttachments(donorEmail, subject, body, [
-                {
-                  filename: `veriport-report-${reportIdStrForUrl}${revision ? `-${revision}` : ""}.pdf`,
-                  contentType: "application/pdf",
-                  content: embeddedPdf,
-                },
-              ]);
-
-              await prisma.veriportMroReport.update({
-                where: reportWhere,
-                data: { emailedTo: donorEmail, emailedAt: new Date(), emailStatus: "SENT", emailError: null },
-              });
-            } catch (mailErr: any) {
-              await prisma.veriportMroReport.update({
-                where: reportWhere,
-                data: { emailStatus: "FAILED", emailError: mailErr?.message ?? String(mailErr) },
-              });
-            }
           } else {
-            const overallResult =
-              extract(veriportMroData, "Results.MroVerification.MroOverallResult") ??
-              extract(veriportMroData, "Results.MroVerification.MroMisOverallResult") ??
-              "Available in portal";
-
-            const subject = `Your drug test results are ready (Report ${reportIdStrForUrl})`;
-            const body = `Hello,
-
-Your test results are now available.
-
-Report ID: ${reportIdStrForUrl}
-Revision: ${revision ?? "N/A"}
-Overall result: ${overallResult}
-
-Please sign in to the portal to view and download your PDF report (print layout matches your account).
-`;
-
-            try {
-              await sendMailWithAttachments(donorEmail, subject, body, []);
-              await prisma.veriportMroReport.update({
-                where: reportWhere,
-                data: { emailedTo: donorEmail, emailedAt: new Date(), emailStatus: "SENT", emailError: null },
+            // Avoid spamming users if SNS re-delivers identical payload for same revision.
+            if (!payloadUnchanged) {
+              const kind = existing ? "UPDATED" : "READY";
+              const portalBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || null;
+              const { subject, text } = buildVeriportReportEmail({
+                kind,
+                reportId: reportIdStrForUrl,
+                revision,
+                overallResult,
+                portalBaseUrl,
               });
-            } catch (mailErr: any) {
-              await prisma.veriportMroReport.update({
-                where: reportWhere,
-                data: { emailStatus: "FAILED", emailError: mailErr?.message ?? String(mailErr) },
-              });
+
+              try {
+                // Email policy: do not attach by default. Users authenticate to access the official PDF via portal.
+                // If you want attachments again, we can make it configurable via env flag.
+                await sendMailWithAttachments(donorEmail, subject, text, []);
+                await prisma.veriportMroReport.update({
+                  where: reportWhere,
+                  data: { emailedTo: donorEmail, emailedAt: new Date(), emailStatus: "SENT", emailError: null },
+                });
+              } catch (mailErr: any) {
+                await prisma.veriportMroReport.update({
+                  where: reportWhere,
+                  data: { emailStatus: "FAILED", emailError: mailErr?.message ?? String(mailErr) },
+                });
+              }
             }
           }
         } catch (emailErr: any) {

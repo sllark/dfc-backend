@@ -17,6 +17,8 @@ import stripeSessionRouter from "./routes/stripeSession";
 import veriportSnsRoutes from "./routes/veriportSnsRoutes";
 import veriportRoutes from "./routes/veriportRoutes";
 import panelMatrixRoutes from "./routes/panelMatrixRoutes";
+import emailAutomationRoutes from "./routes/emailAutomationRoutes";
+import { sendUpcomingTestReminders } from "./services/reminderEmailService";
 
 dotenv.config();
 
@@ -105,6 +107,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api', AuthRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api', panelMatrixRoutes);
+app.use('/api', AuthMiddleware.authenticate, emailAutomationRoutes);
 
 app.use('/api/donors', donorRegistrationRoutes);
 
@@ -169,4 +172,21 @@ const host = process.env.HOST || 'localhost';
 app.listen(port, () => {
     console.log(`✅ Server is running at http://${host}:${port}`);
     console.log('Press Ctrl+C to stop the server.');
+
+    const enableReminderCron = String(process.env.ENABLE_TEST_REMINDER_CRON || "").toLowerCase() === "true";
+    if (enableReminderCron) {
+        const intervalMinutesRaw = Number(process.env.TEST_REMINDER_CRON_MINUTES || 60);
+        const intervalMs = Math.max(5, Number.isFinite(intervalMinutesRaw) ? intervalMinutesRaw : 60) * 60 * 1000;
+        const hoursAheadRaw = Number(process.env.TEST_REMINDER_HOURS_AHEAD || 24);
+        const hoursAhead = Number.isFinite(hoursAheadRaw) ? Math.max(1, Math.min(168, hoursAheadRaw)) : 24;
+        console.log(`⏰ Test reminder cron enabled: every ${intervalMs / 60000}m, horizon=${hoursAhead}h`);
+        setInterval(async () => {
+            try {
+                const result = await sendUpcomingTestReminders(hoursAhead);
+                console.log(`📧 Reminder job: scanned=${result.scanned}, sent=${result.sent}, failed=${result.failed}`);
+            } catch (err: any) {
+                console.error("Reminder job failed:", err?.message ?? String(err));
+            }
+        }, intervalMs);
+    }
 });
